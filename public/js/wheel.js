@@ -24,136 +24,142 @@ $(document).ready(function() {
         // Tạo vòng quay sau khi lấy giải thưởng
         createWheel();
     }
-
-    // Tạo vòng quay
-    const createWheel = () => {
-        const wheel = document.getElementById('wheel');
-        if (!wheel || !prizes.length) return;
-
-        // Đảm bảo số lượng phân đoạn cố định để chia đều
-        const totalPrizes = prizes.length;
-        const anglePerSegment = 360 / totalPrizes;
-
-        // Xóa tất cả các phân đoạn hiện có
-        wheel.innerHTML = '';
-
-        // Tạo các phân đoạn với kích thước bằng nhau
-        for (let i = 0; i < totalPrizes; i++) {
-            const prize = prizes[i];
-
-            // Lưu thông tin mapping giữa ID giải và vị trí trên vòng quay
-            segmentMap[prize.id] = i;
-            prizeIdToIndexMap[prize.id] = i;
-
-            const startAngle = i * anglePerSegment;
-            const endAngle = (i + 1) * anglePerSegment;
-
-            // Tính toán tọa độ của phân đoạn
-            const startRad = (startAngle - 90) * Math.PI / 180;
-            const endRad = (endAngle - 90) * Math.PI / 180;
-            const centerX = 50;
-            const centerY = 50;
-            const radius = 50;
-
-            const x1 = centerX + radius * Math.cos(startRad);
-            const y1 = centerY + radius * Math.sin(startRad);
-            const x2 = centerX + radius * Math.cos(endRad);
-            const y2 = centerY + radius * Math.sin(endRad);
-
-            // Tạo SVG cho phân đoạn
-            const segment = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            segment.setAttribute('viewBox', '0 0 100 100');
-            segment.style.position = 'absolute';
-            segment.style.width = '100%';
-            segment.style.height = '100%';
-            segment.style.transform = `rotate(${startAngle}deg)`;
-            segment.style.transformOrigin = 'center';
-            segment.classList.add('wheel-segment');
-
-            // Thêm data attributes cho debug
-            segment.dataset.prizeId = prize.id;
-            segment.dataset.prizeIndex = i;
-            segment.dataset.prizeName = prize.name;
-            segment.dataset.segmentStart = startAngle;
-            segment.dataset.segmentEnd = endAngle;
-
-            // Tạo đường path cho phân đoạn
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('d', `M${centerX},${centerY} L${x1},${y1} A${radius},${radius} 0 0,1 ${x2},${y2} Z`);
-
-            // Màu phân đoạn với gradient - xen kẽ đỏ và trắng
-            // Sử dụng màu từ giải thưởng nếu có
-            if (i % 2 === 0) {
-                let fillColor = prize.background_color || '#ED1C24';
-                path.setAttribute('fill', fillColor);
-            } else {
-                path.setAttribute('fill', '#ffffff');
-            }
-
-            path.setAttribute('stroke', '#056839');
-            path.setAttribute('stroke-width', '0.5');
-
-            // Thêm path vào segment
-            segment.appendChild(path);
-
-            // Thêm segment vào wheel
-            wheel.appendChild(segment);
-
-            // Thêm text giải thưởng
-            const midAngle = startAngle + anglePerSegment / 2;
-            const midRad = (midAngle - 90) * Math.PI / 180;
-            const textDistance = 35; // Cách tâm 35% bán kính cho rõ hơn
-            const textX = 50 + textDistance * Math.cos(midRad);
-            const textY = 50 + textDistance * Math.sin(midRad);
-
-            const text = document.createElement('div');
-            text.className = 'wheel-segment-text';
-            text.textContent = prize.name;
-            text.style.left = textX + '%';
-            text.style.top = textY + '%';
-
-            // Cố định hướng của chữ theo chiều đọc từ ngoài vào trong (hướng về tâm)
-            const textRotation = midAngle + 90; // Cố định hướng text
-
-            text.style.transform = `translate(-50%, -50%) rotate(${textRotation}deg)`;
-            text.style.color = i % 2 === 0 ? '#ffffff' : '#ED1C24';
-            text.style.fontWeight = 'bold';
-            text.style.fontSize = '14px';
-            text.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)';
-
-            wheel.appendChild(text);
-
-            // Thêm hình ảnh nếu có
-            if (prize.image) {
-                const imgDistance = 70; // Cách tâm 70% bán kính, xa hơn một chút
-                const imgX = 50 + imgDistance * Math.cos(midRad);
-                const imgY = 50 + imgDistance * Math.sin(midRad);
-
-                const imgContainer = document.createElement('div');
-                imgContainer.className = 'wheel-image';
-                imgContainer.style.left = imgX + '%';
-                imgContainer.style.top = imgY + '%';
-                imgContainer.style.transform = `translate(-50%, -50%) rotate(${textRotation}deg)`;
-                imgContainer.style.width = '45px';
-                imgContainer.style.height = '45px';
-
-                const img = document.createElement('img');
-                img.src = prize.image;
-                img.style.width = '100%';
-                img.style.height = '100%';
-                img.style.objectFit = 'contain';
-                img.style.filter = 'drop-shadow(1px 1px 2px rgba(0,0,0,0.5))';
-
-                imgContainer.appendChild(img);
-                wheel.appendChild(imgContainer);
-            }
+    function getAlternatingColor(index) {
+        if (index % 2 === 0) {
+            return { background: '#FFFFFF', text: '#000000' }; // Màu trắng với chữ đen
+        } else {
+            return { background: '#FFFFFF', text: '#ffffff' }; // Màu đỏ với chữ đen
         }
+    }
+// Tạo vòng quay
+const createWheel = () => {
+    const wheel = document.getElementById('wheel');
+    if (!wheel || !prizes.length) return;
 
-        if (debugMode) {
-            console.log('Vòng quay đã được tạo với ' + totalPrizes + ' giải thưởng');
-            console.log('Mapping giữa ID và vị trí:', prizeIdToIndexMap);
+    // Đảm bảo số lượng phân đoạn cố định để chia đều
+    const totalPrizes = prizes.length;
+    const anglePerSegment = 360 / totalPrizes;
+
+    // Xóa tất cả các phân đoạn hiện có
+    wheel.innerHTML = '';
+
+    // Tạo các phân đoạn với kích thước bằng nhau
+    for (let i = 0; i < totalPrizes; i++) {
+        const prize = prizes[i];
+
+        // Lưu thông tin mapping giữa ID giải và vị trí trên vòng quay
+        segmentMap[prize.id] = i;
+        prizeIdToIndexMap[prize.id] = i;
+
+        const startAngle = i * anglePerSegment;
+        const endAngle = (i + 1) * anglePerSegment;
+
+        // Tính toán tọa độ của phân đoạn
+        const startRad = (startAngle - 90) * Math.PI / 180;
+        const endRad = (endAngle - 90) * Math.PI / 180;
+        const centerX = 50;
+        const centerY = 50;
+        const radius = 50;
+
+        const x1 = centerX + radius * Math.cos(startRad);
+        const y1 = centerY + radius * Math.sin(startRad);
+        const x2 = centerX + radius * Math.cos(endRad);
+        const y2 = centerY + radius * Math.sin(endRad);
+
+        // Tạo SVG cho phân đoạn
+        const segment = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        segment.setAttribute('viewBox', '0 0 100 100');
+        segment.style.position = 'absolute';
+        segment.style.width = '100%';
+        segment.style.height = '100%';
+        segment.style.transform = `rotate(${startAngle}deg)`;
+        segment.style.transformOrigin = 'center';
+        segment.classList.add('wheel-segment');
+
+        // Thêm data attributes cho debug
+        segment.dataset.prizeId = prize.id;
+        segment.dataset.prizeIndex = i;
+        segment.dataset.prizeName = prize.name;
+        segment.dataset.segmentStart = startAngle;
+        segment.dataset.segmentEnd = endAngle;
+
+        // Lấy màu sắc xen kẽ
+        const colors = getAlternatingColor(i);
+
+        // Tạo đường path cho phân đoạn
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', `M${centerX},${centerY} L${x1},${y1} A${radius},${radius} 0 0,1 ${x2},${y2} Z`);
+
+        // Gán màu cho phân đoạn
+        path.setAttribute('fill', colors.background);
+
+        path.setAttribute('stroke', '#ffffff');
+        path.setAttribute('stroke-width', '0.5');
+
+        // Thêm path vào segment
+        segment.appendChild(path);
+
+        // Thêm segment vào wheel
+        wheel.appendChild(segment);
+
+        // Thêm text giải thưởng
+        const midAngle = startAngle + anglePerSegment / 2;
+        const midRad = (midAngle - 90) * Math.PI / 180;
+        const textDistance = 35; // Cách tâm 35% bán kính cho rõ hơn
+        const textX = 50 + textDistance * Math.cos(midRad);
+        const textY = 50 + textDistance * Math.sin(midRad);
+
+        const text = document.createElement('div');
+        text.className = 'wheel-segment-text';
+        text.textContent = prize.name;
+        text.style.left = textX + '%';
+        text.style.top = textY + '%';
+
+        // Cố định hướng của chữ theo chiều đọc từ ngoài vào trong (hướng về tâm)
+        const textRotation = midAngle + 90; // Cố định hướng text
+
+        text.style.transform = `translate(-50%, -50%) rotate(${textRotation}deg)`;
+        text.style.color = colors.text;
+        text.style.fontWeight = 'bold';
+        text.style.fontSize = '14px';
+        text.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)';
+
+        wheel.appendChild(text);
+
+        // Thêm hình ảnh nếu có
+        if (prize.image) {
+            const imgDistance = 70; // Cách tâm 70% bán kính, xa hơn một chút
+            const imgX = 50 + imgDistance * Math.cos(midRad);
+            const imgY = 50 + imgDistance * Math.sin(midRad);
+
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'wheel-image';
+            imgContainer.style.left = imgX + '%';
+            imgContainer.style.top = imgY + '%';
+            imgContainer.style.transform = `translate(-50%, -50%) rotate(${textRotation}deg)`;
+            imgContainer.style.width = '45px';
+            imgContainer.style.height = '45px';
+
+            const img = document.createElement('img');
+            img.src = prize.image;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'contain';
+            img.style.filter = 'drop-shadow(1px 1px 2px rgba(0,0,0,0.5))';
+
+            imgContainer.appendChild(img);
+            wheel.appendChild(imgContainer);
         }
-    };
+    }
+
+    if (debugMode) {
+        console.log('Vòng quay đã được tạo với ' + totalPrizes + ' giải thưởng');
+        console.log('Mapping giữa ID và vị trí:', prizeIdToIndexMap);
+    }
+};
+
+
+// ...existing code...
 
     // Hàm tìm vị trí phân đoạn dựa vào ID giải thưởng
     function findSegmentByPrizeId(prizeId) {
@@ -693,7 +699,6 @@ $(document).ready(function() {
         // Khởi tạo modal
         initializeModal();
 
-        // Thêm hiệu ứng cho wheel-center
         $('.wheel-center').hover(function() {
             $(this).find('span').css('transform', 'scale(1.1)');
         }, function() {

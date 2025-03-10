@@ -22,6 +22,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ asset('css/wheel.css') }}">
+    <style>
+        .wheel-container {
+    position: relative;
+}
+
+.wheel-pointer {
+    top: 0;
+    left: 46%; /* Di chuyển mũi tên sang trái */
+    transform: translateX(-50%);
+    fill: red; 
+}
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -46,7 +58,7 @@
             <!-- Vòng quay -->
             <div class="col-lg-6">
                 <div class="wheel-section animate__animated animate__fadeInRight">
-                    <div class="wheel-container">
+                    <div class="wheel-container position-relative">
                         <div class="wheel-wrapper">
                             <div class="wheel" id="wheel">
                                 <!-- Các phân đoạn được tạo bằng JavaScript -->
@@ -54,23 +66,26 @@
                             <div class="wheel-center">
                                 <span>QUAY<br>NGAY!</span>
                             </div>
-                            <img src="{{ asset('images/wheel-pointer.svg') }}" alt="Pointer" class="wheel-pointer">
-                            <div class="wheel-base"></div>
                         </div>
-
-                        <button class="spin-button" id="spin-button" disabled>QUAY NGAY!</button>
-
-                        <div class="result-container" id="result-container">
-                            <h3 id="result-title"></h3>
-                            <p id="result-message"></p>
-                            <div class="prize-details" id="prize-details" style="display: none;">
-                                <img src="" alt="" class="prize-image" id="prize-image">
-                                <div class="prize-info">
-                                    <h4 id="prize-name"></h4>
-                                    <p id="prize-description"></p>
-                                    <div class="prize-stats">
-                                        <span id="prize-quantity"></span>
-                                    </div>
+                        <!-- Thay thế hình ảnh mũi tên bằng mã SVG và căn chỉnh bằng CSS -->
+                        <svg class="wheel-pointer position-absolute" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px">
+                            <path d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M12 16.5l-6-6h12z"/>
+                        </svg>
+                    </div>
+            
+                    <button class="spin-button" id="spin-button" disabled>QUAY NGAY!</button>
+            
+                    <div class="result-container" id="result-container">
+                        <h3 id="result-title"></h3>
+                        <p id="result-message"></p>
+                        <div class="prize-details" id="prize-details" style="display: none;">
+                            <img src="" alt="" class="prize-image" id="prize-image">
+                            <div class="prize-info">
+                                <h4 id="prize-name"></h4>
+                                <p id="prize-description"></p>
+                                <div class="prize-stats">
+                                    <span id="prize-quantity"></span>
                                 </div>
                             </div>
                         </div>
