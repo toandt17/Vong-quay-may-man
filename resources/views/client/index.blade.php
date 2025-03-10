@@ -31,7 +31,7 @@
     top: 0;
     left: 46%; /* Di chuyển mũi tên sang trái */
     transform: translateX(-50%);
-    fill: red; 
+    fill: red;
 }
     </style>
 </head>
@@ -45,9 +45,9 @@
     </header>
 
     <div class="container">
-        <div class="row">
+        <div class="row justify-content-center">
             <!-- Nút mở form đăng ký -->
-            <div class="col-lg-6">
+            <div class="col-12 col-md-6 mb-4">
                 <div class="start-container animate__animated animate__fadeInLeft">
                     <h2 class="start-title">Tham gia ngay</h2>
                     <p>Đăng ký tham gia và có cơ hội nhận những phần quà hấp dẫn!</p>
@@ -56,7 +56,7 @@
             </div>
 
             <!-- Vòng quay -->
-            <div class="col-lg-6">
+            <div class="col-12 col-md-6">
                 <div class="wheel-section animate__animated animate__fadeInRight">
                     <div class="wheel-container position-relative">
                         <div class="wheel-wrapper">
@@ -73,9 +73,9 @@
                             <path d="M12 16.5l-6-6h12z"/>
                         </svg>
                     </div>
-            
+
                     <button class="spin-button" id="spin-button" disabled>QUAY NGAY!</button>
-            
+
                     <div class="result-container" id="result-container">
                         <h3 id="result-title"></h3>
                         <p id="result-message"></p>

@@ -43,6 +43,12 @@ const createWheel = () => {
     // Xóa tất cả các phân đoạn hiện có
     wheel.innerHTML = '';
 
+    // Tính toán kích thước text và hình ảnh dựa trên kích thước màn hình
+    const isMobile = window.innerWidth <= 768;
+    const textDistance = isMobile ? 30 : 35; // Giảm khoảng cách text trên mobile
+    const imgDistance = isMobile ? 65 : 70; // Giảm khoảng cách hình ảnh trên mobile
+    const fontSize = isMobile ? '10px' : '14px'; // Giảm kích thước font trên mobile
+
     // Tạo các phân đoạn với kích thước bằng nhau
     for (let i = 0; i < totalPrizes; i++) {
         const prize = prizes[i];
@@ -105,7 +111,6 @@ const createWheel = () => {
         // Thêm text giải thưởng
         const midAngle = startAngle + anglePerSegment / 2;
         const midRad = (midAngle - 90) * Math.PI / 180;
-        const textDistance = 35; // Cách tâm 35% bán kính cho rõ hơn
         const textX = 50 + textDistance * Math.cos(midRad);
         const textY = 50 + textDistance * Math.sin(midRad);
 
@@ -114,21 +119,16 @@ const createWheel = () => {
         text.textContent = prize.name;
         text.style.left = textX + '%';
         text.style.top = textY + '%';
-
-        // Cố định hướng của chữ theo chiều đọc từ ngoài vào trong (hướng về tâm)
-        const textRotation = midAngle + 90; // Cố định hướng text
-
-        text.style.transform = `translate(-50%, -50%) rotate(${textRotation}deg)`;
+        text.style.transform = `translate(-50%, -50%) rotate(${midAngle + 90}deg)`;
         text.style.color = colors.text;
         text.style.fontWeight = 'bold';
-        text.style.fontSize = '14px';
+        text.style.fontSize = fontSize;
         text.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)';
 
         wheel.appendChild(text);
 
-        // Thêm hình ảnh nếu có
+        // Điều chỉnh kích thước và vị trí hình ảnh
         if (prize.image) {
-            const imgDistance = 70; // Cách tâm 70% bán kính, xa hơn một chút
             const imgX = 50 + imgDistance * Math.cos(midRad);
             const imgY = 50 + imgDistance * Math.sin(midRad);
 
@@ -136,9 +136,9 @@ const createWheel = () => {
             imgContainer.className = 'wheel-image';
             imgContainer.style.left = imgX + '%';
             imgContainer.style.top = imgY + '%';
-            imgContainer.style.transform = `translate(-50%, -50%) rotate(${textRotation}deg)`;
-            imgContainer.style.width = '45px';
-            imgContainer.style.height = '45px';
+            imgContainer.style.transform = `translate(-50%, -50%) rotate(${midAngle + 90}deg)`;
+            imgContainer.style.width = isMobile ? '35px' : '45px';
+            imgContainer.style.height = isMobile ? '35px' : '45px';
 
             const img = document.createElement('img');
             img.src = prize.image;
@@ -158,6 +158,10 @@ const createWheel = () => {
     }
 };
 
+// Thêm event listener cho resize để cập nhật kích thước
+window.addEventListener('resize', () => {
+    createWheel();
+});
 
 // ...existing code...
 

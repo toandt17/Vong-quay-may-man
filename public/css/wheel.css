@@ -89,7 +89,7 @@ body {
     width: 100%;
     max-width: 500px;
     margin: 0 auto;
-    padding: 30px 30px 60px;
+    padding: 20px;
 }
 
 .wheel-wrapper {
@@ -135,7 +135,7 @@ body {
         var(--lucky-gold),
         var(--gold-light)
     ); */
-    
+
     z-index: -1;
     animation: shimmer 3s infinite linear;
 }
@@ -513,25 +513,95 @@ body {
 
 @media (max-width: 768px) {
     .wheel-container {
-        max-width: 320px;
+        max-width: 100%;
+        padding: 15px;
+    }
+
+    .wheel-wrapper {
+        width: 90%;
+        margin: 0 auto;
+    }
+
+    .wheel-center {
+        width: 25%;
+        height: 25%;
+    }
+
+    .wheel-center span {
+        font-size: 1rem;
+    }
+
+    .wheel-segment-text {
+        font-size: 12px;
+    }
+
+    .wheel-image {
+        width: 35px;
+        height: 35px;
     }
 
     .spin-button {
         padding: 10px 20px;
         font-size: 16px;
+        margin: 15px auto;
     }
 
-    .wheel:before {
-        animation: none;
+    .wheel-pointer {
+        width: 40px;
+        height: 40px;
+        top: -35px;
+    }
+
+    .start-container {
+        padding: 20px;
+        min-height: 250px;
+    }
+
+    .start-title {
+        font-size: 24px;
+    }
+
+    .start-container p {
+        font-size: 16px;
+    }
+
+    #open-register-modal {
+        font-size: 16px;
+        padding: 10px 25px;
+    }
+}
+
+@media (max-width: 576px) {
+    .wheel-container {
+        padding: 10px;
+    }
+
+    .wheel-wrapper {
+        width: 100%;
     }
 
     .wheel-center {
-        width: 30%;
-        height: 30%;
+        width: 22%;
+        height: 22%;
     }
 
     .wheel-center span {
-        font-size: 1.2rem;
+        font-size: 0.9rem;
+    }
+
+    .wheel-segment-text {
+        font-size: 10px;
+    }
+
+    .wheel-image {
+        width: 30px;
+        height: 30px;
+    }
+
+    .wheel-pointer {
+        width: 35px;
+        height: 35px;
+        top: -20px;
     }
 }
 
