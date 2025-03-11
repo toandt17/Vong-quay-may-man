@@ -249,14 +249,69 @@ window.addEventListener('resize', () => {
             }
         });
 
-        // Hiển thị/ẩn trường giống lúa khi chọn là nông dân (đã chuyển sang modal)
+        // Xử lý dropdown giống lúa
+        $('#rice_variety_display').parent().find('.dropdown-item').click(function(e) {
+            e.preventDefault();
+            const value = $(this).data('value');
+            const text = $(this).text();
+            $('#rice_variety').val(value);
+            $('#rice_variety_display').val(text);
+        });
+
+        // Xử lý dropdown giai đoạn lúa
+        $('#rice_stage_display').parent().find('.dropdown-item').click(function(e) {
+            e.preventDefault();
+            const value = $(this).data('value');
+            const text = $(this).text();
+            $('#rice_stage').val(value);
+            $('#rice_stage_display').val(text);
+        });
+
+        // Xử lý dropdown sản phẩm đã sử dụng (multiple)
+        $('#used_products_display').parent().find('.dropdown-item').click(function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const checkbox = $(this).find('input[type="checkbox"]');
+            checkbox.prop('checked', !checkbox.prop('checked'));
+            updateUsedProducts();
+        });
+
+        // Ngăn dropdown đóng khi click vào checkbox
+        $('#used_products_display').parent().find('input[type="checkbox"]').click(function(e) {
+            e.stopPropagation();
+            $(this).prop('checked', !$(this).prop('checked'));
+            updateUsedProducts();
+        });
+
+        // Hiển thị/ẩn trường giống lúa khi chọn là nông dân
         $('#is_farmer').change(function() {
             if($(this).is(':checked')) {
                 $('.farmer-field').show();
+                $('#rice_variety, #rice_stage').prop('required', true);
             } else {
                 $('.farmer-field').hide();
+                $('#rice_variety, #rice_stage').prop('required', false).val('');
+                $('#rice_variety_display, #rice_stage_display').val('');
+                // Reset used_products
+                $('#used_products').val([]);
+                $('#used_products_display').val('');
+                $('#used_products_display').parent().find('input[type="checkbox"]').prop('checked', false);
             }
         });
+
+        // Hàm cập nhật hiển thị sản phẩm đã chọn
+        function updateUsedProducts() {
+            const selectedProducts = [];
+            const selectedValues = [];
+            $('#used_products_display').parent().find('input[type="checkbox"]:checked').each(function() {
+                const text = $(this).parent().text().trim();
+                const value = $(this).parent().parent().data('value');
+                selectedProducts.push(text);
+                selectedValues.push(value);
+            });
+            $('#used_products_display').val(selectedProducts.join(', ') || '');
+            $('#used_products').val(selectedValues);
+        }
     }
 
     // Hàm submit form đăng ký từ modal
@@ -281,7 +336,8 @@ window.addEventListener('resize', () => {
             address: $('#address').val(),
             is_farmer: $('#is_farmer').is(':checked') ? 1 : 0,
             rice_variety: $('#rice_variety').val(),
-            used_products: $('#used_products').val(),
+            rice_stage: $('#rice_stage').val(),
+            used_products: $('#used_products').val() ? $('#used_products').val().join(', ') : '',
             _token: $('meta[name="csrf-token"]').attr('content')
         };
 

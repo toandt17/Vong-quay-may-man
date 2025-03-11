@@ -19,6 +19,7 @@ class Participant extends Model
         'address',
         'is_farmer',
         'rice_variety',
+        'rice_stage',
         'used_products',
     ];
 

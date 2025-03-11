@@ -57,6 +57,7 @@ class LuckyWheelController extends Controller
             'address' => 'required|string|max:255',
             'is_farmer' => 'boolean',
             'rice_variety' => 'nullable|string|max:255',
+            'rice_stage' => 'nullable|string|max:255',
             'used_products' => 'nullable|string|max:255',
         ]);
 

@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('address');
             $table->boolean('is_farmer')->default(false);
             $table->string('rice_variety')->nullable(); // Giống lúa
+            $table->string('rice_stage')->nullable(); // Giai đoạn sinh trưởng
             $table->string('used_products')->nullable(); // Sản phẩm đã sử dụng của Agrijapan
             $table->timestamps();
         });
