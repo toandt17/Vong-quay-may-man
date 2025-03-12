@@ -9,6 +9,7 @@
     <meta property="og:title" content="Vòng Quay May Mắn - {{ $luckyWheel->name }}">
     <meta property="og:description" content="{{ $luckyWheel->description }}">
     <meta property="og:type" content="website">
+
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:image" content="{{ asset('images/wheel-preview.jpg') }}">
     <title>Vòng Quay May Mắn - {{ $luckyWheel->name }}</title>
@@ -122,27 +123,25 @@
     <!-- Header -->
     <header class="header">
         <div class="container">
-            <h1 class="animate__animated animate__fadeInDown">🎉 Vòng Quay May Mắn 🎉</h1>
-            <p class="animate__animated animate__fadeInUp">{{ $luckyWheel->description }}</p>
+            <div class="row align-items-center">
+                <div class="col-md-7 col-sm-12 mb-3 mb-md-0">
+                    <h1 class="animate__animated animate__fadeInDown">🎉 Vòng Quay May Mắn 🎉</h1>
+                    <p class="animate__animated animate__fadeInUp mb-0">{{ $luckyWheel->description }}</p>
+                </div>
+                <div class="col-md-5 col-sm-12 text-center text-md-end">
+                    <button id="open-register-modal" class="btn btn-start animate__animated animate__pulse" style="z-index: 100; position: relative;" onclick="openRegisterForm()">
+                        <i class="fas fa-gift me-2"></i> BẮT ĐẦU NGAY
+                    </button>
+                </div>
+            </div>
         </div>
     </header>
 
     <div class="container">
         <div class="row justify-content-center">
-            <!-- Nút mở form đăng ký -->
-            <div class="col-12 col-md-6 mb-4">
-                <div class="start-container animate__animated animate__fadeInLeft">
-                    <h2 class="start-title">🎁 Tham Gia Ngay</h2>
-                    <p>Đăng ký tham gia và có cơ hội nhận những phần quà hấp dẫn!</p>
-                    <button id="open-register-modal" class="btn btn-primary btn-lg">
-                        <i class="fas fa-gift me-2"></i> BẮT ĐẦU NGAY
-                    </button>
-                </div>
-            </div>
-
             <!-- Vòng quay -->
-            <div class="col-12 col-md-6">
-                <div class="wheel-section animate__animated animate__fadeInRight">
+            <div class="col-12 col-md-8 mx-auto">
+                <div class="wheel-section animate__animated animate__fadeIn">
                     <div class="wheel-container">
                         <div class="wheel-wrapper">
                             <div class="wheel" id="wheel">
@@ -262,6 +261,19 @@
                                     <option value="Nàng hoa 9">Nàng hoa 9</option>
                                     <option value="ST24">ST24</option>
                                     <option value="ST25">ST25</option>
+                                    <option value="ST 21-3">ST 21-3</option>
+                                    <option value="Lúa lai KC06-1">Lúa lai KC06-1</option>
+                                    <option value="Lúa giống từ 1 – 3 tháng">Lúa giống từ 1 – 3 tháng</option>
+                                    <option value="Lúa giống từ 6 – 8 tháng">Lúa giống từ 6 – 8 tháng</option>
+                                    <option value="ML 202 (Ma Lâm 202)">ML 202 (Ma Lâm 202)</option>
+                                    <option value="BĐR999">BĐR999</option>
+                                    <option value="OM18">OM18</option>
+                                    <option value="OM34">OM34</option>
+                                    <option value="OM7347">OM7347</option>
+                                    <option value="Lúa nếp">Lúa nếp</option>
+                                    <option value="Lúa tẻ">Lúa tẻ</option>
+                                    <option value="Lúa nàng hai">Lúa nàng hai</option>
+                                    <option value="Lúa Thông">Lúa Thông</option>
                                     <option value="Khác">Khác</option>
                                 </select>
                                 <div class="invalid-feedback" id="rice_variety-error">Vui lòng chọn giống lúa</div>
@@ -271,13 +283,13 @@
                                 <label class="form-label">Giai đoạn sinh trưởng</label>
                                 <select class="form-select custom-select" id="rice_stage" name="rice_stage" required>
                                     <option value="">Chọn giai đoạn</option>
-                                    <option value="Chuẩn bị xuống giống">Chuẩn bị xuống giống</option>
-                                    <option value="Mạ (1-14 ngày)">Mạ (1-14 ngày)</option>
-                                    <option value="Đẻ nhánh (15-35 ngày)">Đẻ nhánh (15-35 ngày)</option>
-                                    <option value="Đứng cái (35-45 ngày)">Đứng cái (35-45 ngày)</option>
-                                    <option value="Làm đòng (45-55 ngày)">Làm đòng (45-55 ngày)</option>
-                                    <option value="Trổ bông (55-85 ngày)">Trổ bông (55-85 ngày)</option>
-                                    <option value="Chín (85-110 ngày)">Chín (85-110 ngày)</option>
+                                    <option value="Mạ">Mạ</option>
+                                    <option value="Đẻ nhánh">Đẻ nhánh</option>
+                                    <option value="Đón đồng">Đón đồng</option>
+                                    <option value="Làm đồng">Làm đồng</option>
+                                    <option value="Lẹt xẹt-trổ đều">Lẹt xẹt-trổ đều</option>
+                                    <option value="Sáp-Chín sáp">Sáp-Chín sáp</option>
+                                    <option value="Chín">Chín</option>
                                 </select>
                                 <div class="invalid-feedback" id="rice_stage-error">Vui lòng chọn giai đoạn sinh trưởng</div>
                             </div>
@@ -289,21 +301,162 @@
                                         <input type="checkbox" id="product-none" name="used_products[]" value="Chưa sử dụng" checked>
                                         <label for="product-none">Chưa sử dụng</label>
                                     </div>
+                                    <!-- Bổ sung sản phẩm mới -->
                                     <div class="product-option">
-                                        <input type="checkbox" id="product-leaf" name="used_products[]" value="Phân bón lá">
-                                        <label for="product-leaf">Phân bón lá</label>
+                                        <input type="checkbox" id="product-bgp-choi-to" name="used_products[]" value="Bộ Giải Pháp Chồi To Cây Khỏe">
+                                        <label for="product-bgp-choi-to">Bộ Giải Pháp Chồi To Cây Khỏe</label>
                                     </div>
                                     <div class="product-option">
-                                        <input type="checkbox" id="product-root" name="used_products[]" value="Phân bón rễ">
-                                        <label for="product-root">Phân bón rễ</label>
+                                        <input type="checkbox" id="product-bgp-dong-bu" name="used_products[]" value="Bộ Giải Pháp Đòng Bự Bông Kẹo">
+                                        <label for="product-bgp-dong-bu">Bộ Giải Pháp Đòng Bự Bông Kẹo</label>
                                     </div>
                                     <div class="product-option">
-                                        <input type="checkbox" id="product-protection" name="used_products[]" value="Thuốc bảo vệ thực vật">
-                                        <label for="product-protection">Thuốc bảo vệ thực vật</label>
+                                        <input type="checkbox" id="product-bgp-sach-khuan" name="used_products[]" value="Bộ Giải Pháp Sạch Khuẩn Sáng Bông">
+                                        <label for="product-bgp-sach-khuan">Bộ Giải Pháp Sạch Khuẩn Sáng Bông</label>
                                     </div>
                                     <div class="product-option">
-                                        <input type="checkbox" id="product-growth" name="used_products[]" value="Kích thích sinh trưởng">
-                                        <label for="product-growth">Kích thích sinh trưởng</label>
+                                        <input type="checkbox" id="product-bgp-tru-benh" name="used_products[]" value="Bộ Giải Pháp Trừ Bệnh AgriJapan">
+                                        <label for="product-bgp-tru-benh">Bộ Giải Pháp Trừ Bệnh AgriJapan</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-bgp-tuyet-chieu" name="used_products[]" value="Bộ Giải Pháp Tuyệt Chiêu Nấm Khuẩn">
+                                        <label for="product-bgp-tuyet-chieu">Bộ Giải Pháp Tuyệt Chiêu Nấm Khuẩn</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-bgp-dinh-duong" name="used_products[]" value="Bộ Giải Pháp Dinh Dưỡng Phục Hồi Siêu Tốc">
+                                        <label for="product-bgp-dinh-duong">Bộ Giải Pháp Dinh Dưỡng Phục Hồi Siêu Tốc</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-bgp-tru-ray" name="used_products[]" value="Bộ Giải Pháp Trừ Rầy AgriJapan">
+                                        <label for="product-bgp-tru-ray">Bộ Giải Pháp Trừ Rầy AgriJapan</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-bgp-hoan-hao" name="used_products[]" value="Bộ Giải Pháp Hoàn Hảo Tạo Hạt Thần Tốc">
+                                        <label for="product-bgp-hoan-hao">Bộ Giải Pháp Hoàn Hảo Tạo Hạt Thần Tốc</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-bgp-tro-thoat" name="used_products[]" value="Bộ Giải Pháp Trổ Thoát Kẹo Bông">
+                                        <label for="product-bgp-tro-thoat">Bộ Giải Pháp Trổ Thoát Kẹo Bông</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-bgp-sach-nam" name="used_products[]" value="Bộ Giải Pháp Sạch Nấm Khuẩn Gốc">
+                                        <label for="product-bgp-sach-nam">Bộ Giải Pháp Sạch Nấm Khuẩn Gốc</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-brass-481" name="used_products[]" value="Điều Hòa Sinh Trưởng BRASS 481">
+                                        <label for="product-brass-481">Điều Hòa Sinh Trưởng BRASS 481</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-dh-sinh-truong" name="used_products[]" value="Điều hòa sinh trưởng AgriJapan">
+                                        <label for="product-dh-sinh-truong">Điều hòa sinh trưởng AgriJapan</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-gibber" name="used_products[]" value="GIBBER 40WG – GABA CỐM">
+                                        <label for="product-gibber">GIBBER 40WG – GABA CỐM</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-acgabacyto" name="used_products[]" value="ACGABACYTO 50TB – GABA VIÊN">
+                                        <label for="product-acgabacyto">ACGABACYTO 50TB – GABA VIÊN</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-lk-gabacyto" name="used_products[]" value="LK.GABACYTO">
+                                        <label for="product-lk-gabacyto">LK.GABACYTO</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-kem-armor" name="used_products[]" value="KẼM ARMOR, KẼM BÁC SĨ (LK-ZN ARMOR)">
+                                        <label for="product-kem-armor">KẼM ARMOR, KẼM BÁC SĨ (LK-ZN ARMOR)</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-kem-xanh" name="used_products[]" value="KẼM XANH, KẼM ARMOR (LK-ZN ARMOR)">
+                                        <label for="product-kem-xanh">KẼM XANH, KẼM ARMOR (LK-ZN ARMOR)</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-ac-superpotas" name="used_products[]" value="AC-SUPERPOTAS (KALI SỮA 30%)">
+                                        <label for="product-ac-superpotas">AC-SUPERPOTAS (KALI SỮA 30%)</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-kali-sua" name="used_products[]" value="KALI SỮA ÔNG GIÀ (LK-K-Ca)">
+                                        <label for="product-kali-sua">KALI SỮA ÔNG GIÀ (LK-K-Ca)</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-ac-amino-bo" name="used_products[]" value="AC-AMINO-BO (SỮA ĐẬM ĐẶC)">
+                                        <label for="product-ac-amino-bo">AC-AMINO-BO (SỮA ĐẬM ĐẶC)</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-arigold-620" name="used_products[]" value="ARIGOLD 620 (LÂN HỮU HIỆU HAI CHIỀU)">
+                                        <label for="product-arigold-620">ARIGOLD 620 (LÂN HỮU HIỆU HAI CHIỀU)</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-arigod" name="used_products[]" value="Arigod">
+                                        <label for="product-arigod">Arigod</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-bacla" name="used_products[]" value="ĐẶC TRỊ VI KHUẨN BACLA 50SC">
+                                        <label for="product-bacla">ĐẶC TRỊ VI KHUẨN BACLA 50SC</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-starsuper" name="used_products[]" value="STARSUPER 21SL">
+                                        <label for="product-starsuper">STARSUPER 21SL</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-omega-downyrust" name="used_products[]" value="OMEGA-DOWNYRUST 48WG">
+                                        <label for="product-omega-downyrust">OMEGA-DOWNYRUST 48WG</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-zipra" name="used_products[]" value="ZIPRA 80WP">
+                                        <label for="product-zipra">ZIPRA 80WP</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-lk-villa" name="used_products[]" value="LK-VILLA 450SC">
+                                        <label for="product-lk-villa">LK-VILLA 450SC</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-aha-500sc" name="used_products[]" value="AHA 500SC">
+                                        <label for="product-aha-500sc">AHA 500SC</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-forwavil" name="used_products[]" value="FORWAVIL 5SC">
+                                        <label for="product-forwavil">FORWAVIL 5SC</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-gp-dao-on" name="used_products[]" value="GIẢI PHÁP ĐẠO ÔN – VI KHUẨN (BIMDOWMY 375SC + STAR SUPER 21SL)">
+                                        <label for="product-gp-dao-on">GIẢI PHÁP ĐẠO ÔN – VI KHUẨN (BIMDOWMY 375SC + STAR SUPER 21SL)</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-bimdowmy" name="used_products[]" value="BIMDOWMY 375SC">
+                                        <label for="product-bimdowmy">BIMDOWMY 375SC</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-ronado" name="used_products[]" value="RONADO 500EC">
+                                        <label for="product-ronado">RONADO 500EC</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-lorcy" name="used_products[]" value="LORCY 265SC">
+                                        <label for="product-lorcy">LORCY 265SC</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-omega-spidermite" name="used_products[]" value="OMEGA-SPIDERMITE 24SC">
+                                        <label for="product-omega-spidermite">OMEGA-SPIDERMITE 24SC</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-binhfos" name="used_products[]" value="BINHFOS 50EC">
+                                        <label for="product-binhfos">BINHFOS 50EC</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-alex" name="used_products[]" value="ALEX 20SC nhện gié">
+                                        <label for="product-alex">ALEX 20SC nhện gié</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-vk-superlau" name="used_products[]" value="VK.SUPERLAU 750WG">
+                                        <label for="product-vk-superlau">VK.SUPERLAU 750WG</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-redmine" name="used_products[]" value="REDMINE 500SC">
+                                        <label for="product-redmine">REDMINE 500SC</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-gp-ray-canh-trang" name="used_products[]" value="Giải pháp Rầy cánh trắng (Bọ phấn trắng) TIFENA 300SC">
+                                        <label for="product-gp-ray-canh-trang">Giải pháp Rầy cánh trắng (Bọ phấn trắng) TIFENA 300SC</label>
                                     </div>
                                 </div>
                                 <small class="form-text text-muted">Có thể chọn nhiều sản phẩm</small>
@@ -352,9 +505,59 @@
         </div>
     </div>
 
-    <!-- Bootstrap & jQuery JS -->
+    <!-- Modal Lỗi Số Điện Thoại Đã Được Sử Dụng -->
+    <div class="modal fade" id="phoneErrorModal" tabindex="-1" aria-labelledby="phoneErrorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content" style="border: 1px solid #f5c6cb;">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title text-light" id="phoneErrorModalLabel" style="font-size: 16px;">
+                        <i class="fas fa-info-circle me-2"></i> Thông báo
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center p-3">
+                    <p class="mb-2">Số điện thoại này đã được sử dụng.</p>
+                    <p class="small text-muted mb-0">Vui lòng dùng số điện thoại khác.</p>
+                </div>
+                <div class="modal-footer p-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đồng ý</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery & Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Debug Modal -->
+    <script>
+        console.log('==== DEBUG MODAL ====');
+
+        // Kiểm tra jQuery
+        console.log('jQuery loaded:', typeof jQuery !== 'undefined', jQuery ? jQuery.fn.jquery : 'not loaded');
+
+        // Kiểm tra Bootstrap
+        console.log('Bootstrap loaded:', typeof bootstrap !== 'undefined');
+        console.log('Bootstrap Modal loaded:', typeof bootstrap !== 'undefined' && typeof bootstrap.Modal !== 'undefined');
+
+        // Kiểm tra các phần tử DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded');
+            const modalElement = document.getElementById('registerModal');
+            const openBtn = document.getElementById('open-register-modal');
+            const spinBtn = document.getElementById('spin-button');
+
+            console.log('Modal element:', modalElement);
+            console.log('Open button:', openBtn);
+            console.log('Spin button:', spinBtn);
+
+            if (modalElement) {
+                console.log('Modal HTML:', modalElement.outerHTML.substring(0, 200) + '...');
+            }
+        });
+    </script>
+
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Confetti JS (hiệu ứng pháo hoa) -->
@@ -394,265 +597,125 @@
             // Đảm bảo mũi tên trỏ chính xác vào giải thưởng
             ensureExactPointer: true
         };
+
+        // Hàm mở form đăng ký
+        function openRegisterForm() {
+            console.log('Đang mở form đăng ký');
+
+            // Đảm bảo không có backdrop cũ
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                console.log('Xóa backdrop cũ');
+                backdrop.parentNode.removeChild(backdrop);
+            });
+
+            // Đặt lại các thuộc tính body
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+
+            // Tìm modal element
+            const registerModalEl = document.getElementById('registerModal');
+            if (!registerModalEl) {
+                console.error('Không tìm thấy #registerModal');
+                return;
+            }
+
+            // Thử lại với tất cả các phương pháp có thể
+            try {
+                console.log('Phương pháp 1: Tạo và hiển thị modal với Bootstrap API');
+                new bootstrap.Modal(registerModalEl).show();
+            } catch (err) {
+                console.error('Lỗi phương pháp 1:', err);
+
+                try {
+                    console.log('Phương pháp 2: Tạo modal với tùy chọn cụ thể');
+                    const modalOptions = {
+                        backdrop: 'static',
+                        keyboard: false
+                    };
+                    new bootstrap.Modal(registerModalEl, modalOptions).show();
+                } catch (err2) {
+                    console.error('Lỗi phương pháp 2:', err2);
+
+                    if (window.jQuery) {
+                        try {
+                            console.log('Phương pháp 3: Sử dụng jQuery');
+                            $('#registerModal').modal('show');
+                        } catch (err3) {
+                            console.error('Lỗi phương pháp 3:', err3);
+
+                            try {
+                                console.log('Phương pháp 4: Sử dụng data-bs-toggle và click');
+                                // Lấy hoặc tạo một nút trigger mới
+                                let triggerButton = document.getElementById('hidden-modal-trigger');
+                                if (!triggerButton) {
+                                    triggerButton = document.createElement('button');
+                                    triggerButton.id = 'hidden-modal-trigger';
+                                    triggerButton.setAttribute('data-bs-toggle', 'modal');
+                                    triggerButton.setAttribute('data-bs-target', '#registerModal');
+                                    triggerButton.style.display = 'none';
+                                    document.body.appendChild(triggerButton);
+                                }
+                                triggerButton.click();
+                            } catch (err4) {
+                                console.error('Lỗi phương pháp 4:', err4);
+
+                                console.log('Phương pháp 5: Thủ công');
+                                registerModalEl.classList.add('show');
+                                registerModalEl.style.display = 'block';
+                                document.body.classList.add('modal-open');
+
+                                // Tạo backdrop thủ công
+                                let backdrop = document.createElement('div');
+                                backdrop.className = 'modal-backdrop fade show';
+                                document.body.appendChild(backdrop);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     </script>
 
     <!-- Custom JS -->
     <script src="{{ asset('js/wheel.js') }}"></script>
 
-    <!-- Animation Script -->
+    <!-- Xử lý modal đăng ký -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Khởi tạo modal Bootstrap
-            const registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+        console.log('Đang tải script xử lý modal đăng ký');
 
-            // Xử lý mở modal
-            document.getElementById('open-register-modal').addEventListener('click', function() {
-                // Reset các backdrop trước khi mở modal mới
-                document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
-                document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
-                document.body.style.paddingRight = '';
+        // Hàm gọi khi DOM đã sẵn sàng
+        function onDOMReady() {
+            console.log('DOM đã sẵn sàng - khởi tạo xử lý modal');
 
-                // Mở modal
-                new bootstrap.Modal(document.getElementById('registerModal')).show();
-            });
+            // Tìm các phần tử
+            const openModalBtn = document.getElementById('open-register-modal');
+            const registerModalEl = document.getElementById('registerModal');
 
-            // Xử lý checkbox nông dân
-            const farmerCheckbox = document.getElementById('is_farmer');
-            const farmerFields = document.querySelector('.farmer-fields');
+            console.log('Nút mở modal:', openModalBtn);
+            console.log('Modal đăng ký:', registerModalEl);
 
-            farmerCheckbox.addEventListener('change', function() {
-                farmerFields.style.display = this.checked ? 'block' : 'none';
-            });
-
-            // Xử lý dropdown giống lúa
-            document.querySelectorAll('#rice_variety + select').forEach(select => {
-                select.addEventListener('change', function() {
-                    const selectedValue = this.value;
-                    const selectedText = this.options[this.selectedIndex].text;
-                    document.getElementById('rice_variety').value = selectedValue;
-                });
-            });
-
-            // Xử lý dropdown giai đoạn lúa
-            document.querySelectorAll('#rice_stage + select').forEach(select => {
-                select.addEventListener('change', function() {
-                    const selectedValue = this.value;
-                    const selectedText = this.options[this.selectedIndex].text;
-                    document.getElementById('rice_stage').value = selectedValue;
-                });
-            });
-
-            // Xử lý tỉnh/thành phố
-            fetch(provincesUrl)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const provinceSelect = document.getElementById('province');
-                        data.data.forEach(province => {
-                            const option = document.createElement('option');
-                            option.value = province.name;
-                            option.textContent = province.name;
-                            option.dataset.id = province.id;
-                            provinceSelect.appendChild(option);
-                        });
-                    }
-                });
-
-            // Xử lý quận/huyện
-            document.getElementById('province').addEventListener('change', function() {
-                const provinceId = this.options[this.selectedIndex].dataset.id;
-                const districtSelect = document.getElementById('district');
-                const wardSelect = document.getElementById('ward');
-
-                // Reset quận/huyện và phường/xã
-                districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
-                wardSelect.innerHTML = '<option value="">Chọn Phường/Xã</option>';
-                districtSelect.disabled = true;
-                wardSelect.disabled = true;
-
-                if (provinceId) {
-                    fetch(`${apiBaseUrl}/provinces/${provinceId}/districts`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                data.data.forEach(district => {
-                                    const option = document.createElement('option');
-                                    option.value = district.name;
-                                    option.textContent = district.name;
-                                    option.dataset.id = district.id;
-                                    districtSelect.appendChild(option);
-                                });
-                                districtSelect.disabled = false;
-                            }
-                        });
-                }
-            });
-
-            // Xử lý phường/xã
-            document.getElementById('district').addEventListener('change', function() {
-                const districtId = this.options[this.selectedIndex].dataset.id;
-                const wardSelect = document.getElementById('ward');
-
-                // Reset phường/xã
-                wardSelect.innerHTML = '<option value="">Chọn Phường/Xã</option>';
-                wardSelect.disabled = true;
-
-                if (districtId) {
-                    fetch(`${apiBaseUrl}/districts/${districtId}/wards`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                data.data.forEach(ward => {
-                                    const option = document.createElement('option');
-                                    option.value = ward.name;
-                                    option.textContent = ward.name;
-                                    wardSelect.appendChild(option);
-                                });
-                                wardSelect.disabled = false;
-                            }
-                        });
-                }
-            });
-
-            // Reset trạng thái màn hình khi load trang
-            document.addEventListener('DOMContentLoaded', function() {
-                // Đảm bảo không có backdrop nào tồn tại khi trang load
-                document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
-                document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
-                document.body.style.paddingRight = '';
-            });
-
-            // Xử lý đóng modal và reset backdrop
-            function resetModalState() {
-                // Xóa tất cả backdrop của modal
-                const backdrops = document.querySelectorAll('.modal-backdrop');
-                backdrops.forEach(backdrop => backdrop.remove());
-
-                // Reset trạng thái body
-                document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
-                document.body.style.paddingRight = '';
+            if (!registerModalEl || !openModalBtn) {
+                console.error('Không tìm thấy modal hoặc nút bắt đầu');
+                return;
             }
 
-            // Xử lý nút đóng modal
-            document.querySelector('.btn-close').addEventListener('click', function() {
-                resetModalState();
-            });
-
-            // Xử lý nút Đóng trong modal footer
-            document.querySelector('.modal-footer .btn-secondary').addEventListener('click', function() {
-                resetModalState();
-            });
-
-            // Xử lý submit form
-            document.getElementById('submit-registration').addEventListener('click', async function(e) {
+            // Liên kết sự kiện click
+            openModalBtn.addEventListener('click', function(e) {
+                console.log('Nút đăng ký được nhấn (từ event listener)');
                 e.preventDefault();
 
-                const form = document.getElementById('registration-form');
-
-                // Validate form
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-
-                // Disable nút submit
-                const submitBtn = this;
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
-
-                try {
-                    // Thu thập dữ liệu form
-                    const formData = new FormData(form);
-                    const formDataObj = Object.fromEntries(formData.entries());
-
-                    // Xử lý giá trị từ select multiple
-                    const usedProductsSelect = document.getElementById('used_products');
-                    const selectedOptions = Array.from(usedProductsSelect.selectedOptions).map(option => option.value);
-
-                    // Nếu có "Chưa sử dụng" và các option khác, chỉ giữ lại các option khác
-                    const unusedIndex = selectedOptions.indexOf('Chưa sử dụng');
-                    if (unusedIndex !== -1 && selectedOptions.length > 1) {
-                        selectedOptions.splice(unusedIndex, 1);
-                    }
-
-                    // Gán giá trị cho used_products
-                    formDataObj.used_products = selectedOptions.length > 0 ? selectedOptions.join(', ') : 'Chưa sử dụng';
-
-                    // Debug
-                    console.log('Form Data:', formDataObj);
-                    console.log('Used Products:', formDataObj.used_products);
-
-                    // Gửi request
-                    const response = await fetch(registerUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        },
-                        body: JSON.stringify(formDataObj)
-                    });
-
-                    const data = await response.json();
-                    console.log('Server Response:', data);
-
-                    if (response.ok && data.success) {
-                        // Lưu ID người tham gia
-                        participantId = data.participant_id;
-                        isRegistered = true;
-
-                        // Đóng modal
-                        resetModalState();
-
-                        // Hiển thị thông báo thành công
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Đăng ký thành công!',
-                            text: 'Bạn có thể bắt đầu quay thưởng ngay.',
-                            confirmButtonColor: '#28a745'
-                        });
-
-                        // Enable nút quay
-                        document.getElementById('spin-button').disabled = false;
-                    } else {
-                        throw new Error(data.message || 'Có lỗi xảy ra khi đăng ký');
-                    }
-                } catch (error) {
-                    // console.error('Registration Error:', error);
-                    // Swal.fire({
-                    //     icon: 'error',
-                    //     title: 'Đăng ký thất bại!',
-                    //     text: error.message,
-                    //     confirmButtonColor: '#dc3545'
-                    // });
-                } finally {
-                    // Reset nút submit
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i> ĐĂNG KÝ';
-                }
+                openRegisterForm();
             });
+        }
 
-            // Xử lý select multiple cho used_products
-            document.getElementById('used_products').addEventListener('change', function() {
-                const selectedOptions = Array.from(this.selectedOptions).map(option => option.value);
-                const unusedIndex = selectedOptions.indexOf('Chưa sử dụng');
-
-                // Nếu chọn "Chưa sử dụng" và có các option khác được chọn
-                if (unusedIndex !== -1 && selectedOptions.length > 1) {
-                    // Nếu mới chọn "Chưa sử dụng", bỏ chọn các option khác
-                    if (this.options[0].selected) {
-                        for (let i = 1; i < this.options.length; i++) {
-                            this.options[i].selected = false;
-                        }
-                    } else {
-                        // Nếu chọn option khác, bỏ chọn "Chưa sử dụng"
-                        this.options[0].selected = false;
-                    }
-                }
-            });
-        });
+        // Đăng ký sự kiện DOMContentLoaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', onDOMReady);
+        } else {
+            // DOM đã sẵn sàng
+            onDOMReady();
+        }
     </script>
 </body>
 </html>

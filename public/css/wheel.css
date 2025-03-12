@@ -80,7 +80,7 @@ body {
 }
 
 .header h1 {
-    font-size: 3.5rem;
+    font-size: 3.2rem;
     font-weight: 800;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
     margin-bottom: 15px;
@@ -91,6 +91,95 @@ body {
     opacity: 0.9;
     max-width: 800px;
     margin: 0 auto;
+}
+
+/* Nút bắt đầu trong header */
+.btn-start {
+    background: linear-gradient(45deg, var(--festival-red), var(--lucky-gold));
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 12px 30px;
+    border-radius: 50px;
+    border: none;
+    box-shadow: 0 5px 15px rgba(255, 61, 61, 0.3);
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-start:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.3) 50%,
+        rgba(255,255,255,0) 100%
+    );
+    transition: all 0.6s;
+}
+
+.btn-start:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(255, 61, 61, 0.4);
+    color: white;
+}
+
+.btn-start:hover:before {
+    left: 100%;
+}
+
+.btn-start:active {
+    transform: translateY(0);
+}
+
+/* Responsive header */
+@media (max-width: 768px) {
+    .header {
+        padding: 20px 0;
+        text-align: center;
+    }
+
+    .header h1 {
+        font-size: 2.8rem;
+        margin-bottom: 10px;
+    }
+
+    .header p {
+        font-size: 0.95rem;
+        margin-bottom: 15px;
+    }
+
+    .btn-start {
+        font-size: 1.1rem;
+        padding: 10px 25px;
+        display: inline-block;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 576px) {
+    .header h1 {
+        font-size: 1.7rem;
+    }
+
+    .header p {
+        font-size: 0.9rem;
+        padding: 0 10px;
+    }
+
+    .btn-start {
+        font-size: 1rem;
+        padding: 10px 20px;
+        width: 90%;
+        max-width: 280px;
+    }
 }
 
 /* Phần CSS cho vòng quay */
@@ -568,11 +657,11 @@ body {
     }
 
     .header h1 {
-        font-size: 2.5rem;
+        font-size: 2.8rem;
     }
 
     .start-title {
-        font-size: 2rem;
+        font-size: 1.9rem;
     }
 
     .modal-header .modal-title {
@@ -674,7 +763,7 @@ body {
 
 .start-title {
     color: var(--festival-red);
-    font-size: 2.5rem;
+    font-size: 1.9rem;
     font-weight: 800;
     margin-bottom: 25px;
     text-align: center;
@@ -703,7 +792,7 @@ body {
     background: linear-gradient(45deg, var(--festival-red), var(--lucky-gold));
     border: none;
     padding: 15px 40px;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -1235,4 +1324,25 @@ select[multiple] option:last-child {
     .product-option label {
         font-size: 16px;
     }
+}
+
+/* Animation cho trường có lỗi số điện thoại */
+@keyframes phone-error-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+    70% { box-shadow: 0 0 0 5px rgba(220, 53, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
+
+.phone-error-animation {
+    animation: phone-error-pulse 2s infinite;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50% { transform: translateX(-5px); }
+    20%, 40% { transform: translateX(5px); }
+}
+
+.shake-error {
+    animation: shake 0.5s ease-in-out;
 }

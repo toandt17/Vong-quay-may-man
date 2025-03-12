@@ -238,8 +238,8 @@ window.addEventListener('resize', () => {
             // Trúng thưởng
             $('#resultModal').addClass('win').removeClass('lose');
             $('#result-modal-header').css('background', 'linear-gradient(135deg, var(--lucky-gold), var(--festival-red))');
-            $('#modal-result-title').text('Chúc mừng!');
-            $('#modal-result-message').text(`Bạn đã trúng ${prize.name}!`);
+            $('#modal-result-title').text('Cảm ơn bạn đã tham gia!');
+            $('#modal-result-message').text(`${prize.name}!`);
 
             // Hiển thị thông tin chi tiết giải thưởng
             $('#modal-prize-name').text(prize.name);
@@ -284,8 +284,8 @@ window.addEventListener('resize', () => {
         // Vẫn hiển thị kết quả trực tiếp trên trang (có thể giữ lại hoặc bỏ)
         if (isWin && prize) {
             $('#result-container').removeClass('lose-result').addClass('win-result');
-            $('#result-title').text('Chúc mừng!');
-            $('#result-message').text(`Bạn đã trúng ${prize.name}!`);
+            $('#result-title').text('Cảm ơn bạn đã tham gia!');
+            $('#result-message').text(`${prize.name}!`);
             $('#prize-name').text(prize.name);
             $('#prize-description').text(prize.description || '');
             if (prize.image) {
@@ -395,12 +395,13 @@ window.addEventListener('resize', () => {
                 $('#rice_variety, #rice_stage').prop('required', true);
                 // Kích hoạt kiểm tra xác thực cho các trường của nông dân
                 validateInput($('#rice_variety'), 'Vui lòng chọn giống lúa');
-                validateInput($('#rice_stage'), 'Vui lòng chọn giai đoạn lúa');
+                validateInput($('#rice_stage'), 'Vui lòng chọn giai đoạn sinh trưởng');
             } else {
                 $('.farmer-fields').hide();
                 $('#rice_variety, #rice_stage').prop('required', false).val('');
                 // Xóa trạng thái lỗi và thông báo
-                $('#rice_variety, #rice_stage').removeClass('is-invalid is-valid');
+                $('#rice_variety').removeClass('is-invalid').removeClass('is-valid');
+                $('#rice_stage').removeClass('is-invalid').removeClass('is-valid');
                 // Reset used_products
                 $('input[name="used_products[]"]').prop('checked', false);
                 $('#product-none').prop('checked', true);
@@ -410,7 +411,14 @@ window.addEventListener('resize', () => {
         // Kiểm tra các trường của nông dân khi thay đổi
         $('#rice_variety, #rice_stage').on('change blur', function() {
             if ($('#is_farmer').is(':checked')) {
-                validateInput($(this), 'Vui lòng chọn ' + $(this).attr('id').replace('_', ' '));
+                const id = $(this).attr('id');
+                let errorMsg = '';
+                if (id === 'rice_variety') {
+                    errorMsg = 'Vui lòng chọn giống lúa';
+                } else if (id === 'rice_stage') {
+                    errorMsg = 'Vui lòng chọn giai đoạn sinh trưởng';
+                }
+                validateInput($(this), errorMsg);
             }
         });
 
@@ -456,6 +464,25 @@ window.addEventListener('resize', () => {
         // Kiểm tra địa chỉ khi người dùng nhập
         $('#address').on('input blur', function() {
             validateInput($(this), 'Vui lòng nhập địa chỉ cụ thể');
+        });
+
+        // Thêm trình nghe sự kiện cho trường số điện thoại
+        $('#phone').on('input', function() {
+            // Xóa highlight lỗi khi người dùng bắt đầu nhập
+            $(this)
+                .removeClass('is-invalid shake-error phone-error-animation')
+                .css({
+                    'border-color': '',
+                    'border-width': '',
+                    'background-color': ''
+                });
+
+            // Ẩn thông báo lỗi
+            $('#phone-error')
+                .text('')
+                .css({
+                    'display': 'none'
+                });
         });
     }
 
@@ -522,6 +549,11 @@ window.addEventListener('resize', () => {
         const id = field.attr('id');
         const error = $(`#${id}-error`);
 
+        // Không validate trường nông dân nếu không phải là nông dân
+        if ((id === 'rice_variety' || id === 'rice_stage') && !$('#is_farmer').is(':checked')) {
+            return true;
+        }
+
         if (!value) {
             field.addClass('is-invalid');
             error.text(errorMsg);
@@ -549,7 +581,11 @@ window.addEventListener('resize', () => {
         // Nếu là nông dân thì validate thêm các trường
         if ($('#is_farmer').is(':checked')) {
             isValid = validateInput($('#rice_variety'), 'Vui lòng chọn giống lúa') && isValid;
-            isValid = validateInput($('#rice_stage'), 'Vui lòng chọn giai đoạn lúa') && isValid;
+            isValid = validateInput($('#rice_stage'), 'Vui lòng chọn giai đoạn sinh trưởng') && isValid;
+        } else {
+            // Bỏ trạng thái lỗi nếu không phải nông dân
+            $('#rice_variety').removeClass('is-invalid').removeClass('is-valid');
+            $('#rice_stage').removeClass('is-invalid').removeClass('is-valid');
         }
 
         if (!isValid) {
@@ -591,14 +627,31 @@ window.addEventListener('resize', () => {
             url: registerUrl,
             type: 'POST',
             data: formDataObj,
+            beforeSend: function() {
+                // Hiển thị loading overlay
+                $('body').append('<div id="loading-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; justify-content: center; align-items: center;"><div class="spinner-border text-light" style="width: 3rem; height: 3rem;" role="status"><span class="visually-hidden">Đang xử lý...</span></div></div>');
+            },
             success: function(response) {
+                // Xóa loading overlay
+                $('#loading-overlay').remove();
+
                 if (response.success) {
                     // Đóng modal đăng ký
                     registerModal.hide();
 
+                    // Tùy chỉnh thông báo dựa trên response
+                    let icon = 'success';
+                    let title = 'Đăng ký thành công!';
+
+                    // Nếu số điện thoại đã tồn tại, thông báo đặc biệt
+                    if (response.is_existed) {
+                        icon = 'info';
+                        title = 'Số điện thoại đã tồn tại!';
+                    }
+
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Đăng ký thành công!',
+                        icon: icon,
+                        title: title,
                         text: response.message,
                         confirmButtonColor: '#28a745'
                     });
@@ -629,19 +682,71 @@ window.addEventListener('resize', () => {
                 }
             },
             error: function(xhr) {
-                let errorMessage = 'Đã xảy ra lỗi khi đăng ký.';
+                // Xóa loading overlay
+                $('#loading-overlay').remove();
 
-                if (xhr.responseJSON && xhr.responseJSON.errors) {
-                    const errors = xhr.responseJSON.errors;
-                    errorMessage = Object.values(errors)[0][0];
+                let errorMessage = 'Đã xảy ra lỗi khi đăng ký.';
+                let isPhoneUsed = false;
+
+                // Kiểm tra xem có phải lỗi số điện thoại đã được sử dụng không
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error_type === 'phone_used') {
+                        isPhoneUsed = true;
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+
+                        // Fallback check for phone already used
+                        if (errorMessage.toLowerCase().includes('số điện thoại') && errorMessage.toLowerCase().includes('đã được sử dụng')) {
+                            isPhoneUsed = true;
+                        }
+                    } else if (xhr.responseJSON.errors) {
+                        const errors = xhr.responseJSON.errors;
+                        errorMessage = Object.values(errors)[0][0];
+                    }
                 }
 
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Đăng ký thất bại!',
-                    text: errorMessage,
-                    confirmButtonColor: '#dc3545'
-                });
+                if (isPhoneUsed) {
+                    // Highlight trường điện thoại với màu nhẹ hơn
+                    $('#phone')
+                        .removeClass('is-valid')
+                        .addClass('is-invalid shake-error phone-error-animation')
+                        .css({
+                            'border-color': '#dc3545',
+                            'border-width': '1px',
+                            'background-color': 'rgba(220, 53, 69, 0.03)'
+                        });
+
+                    // Hiển thị thông báo lỗi bên dưới trường điện thoại
+                    $('#phone-error')
+                        .text('Số điện thoại này đã được sử dụng.')
+                        .css({
+                            'color': '#dc3545',
+                            'font-weight': 'normal',
+                            'display': 'block',
+                            'font-size': '12px'
+                        });
+
+                    // Hiển thị modal lỗi số điện thoại (nhỏ và đơn giản)
+                    const phoneErrorModal = new bootstrap.Modal(document.getElementById('phoneErrorModal'));
+                    phoneErrorModal.show();
+
+                    // Focus vào trường điện thoại sau khi đóng modal
+                    $('#phoneErrorModal').on('hidden.bs.modal', function() {
+                        setTimeout(function() {
+                            $('#phone').focus().select();
+                        }, 100);
+                    });
+
+                } else {
+                    // Hiển thị thông báo lỗi dựa trên loại lỗi
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Đăng ký thất bại!',
+                        text: errorMessage,
+                        confirmButtonColor: '#dc3545'
+                    });
+                }
 
                 // Re-enable nút submit
                 $('#submit-registration').prop('disabled', false).html('<i class="fas fa-paper-plane me-2"></i> ĐĂNG KÝ');
@@ -1220,7 +1325,6 @@ window.addEventListener('resize', () => {
             console.log("Giải thưởng thực tế:", pointerPosition.prize);
             console.log("Kết quả chính xác:", isCorrect);
         }
-
         // Nếu vị trí không chính xác, điều chỉnh vòng quay
         if (!isCorrect && wheelConfig.ensureExactPointer) {
             // Thêm callback để hiển thị kết quả sau khi điều chỉnh xong
@@ -1329,5 +1433,6 @@ window.addEventListener('resize', () => {
         });
     }
 });
+
 
 

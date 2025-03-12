@@ -81,6 +81,9 @@ class PrizeController extends Controller
             'win_rate' => 'required|numeric|min:0|max:100',
             'quantity' => 'required|integer|min:0',
             'description' => 'nullable|string',
+            'background_color' => 'nullable|string|max:20',
+            'icon' => 'nullable|string|max:50',
+            'remaining' => 'required|integer|min:0',
         ]);
 
         if ($request->hasFile('image')) {
@@ -93,11 +96,8 @@ class PrizeController extends Controller
             $validated['image'] = $path;
         }
 
-        // Cập nhật số lượng còn lại nếu số lượng thay đổi
-        if ($prize->quantity != $validated['quantity']) {
-            $diff = $validated['quantity'] - $prize->quantity;
-            $validated['remaining'] = $prize->remaining + $diff;
-        }
+        // Không cần tính toán số lượng còn lại tự động nữa vì đã có trường remaining
+        // được nhập trực tiếp từ form
 
         $prize->update($validated);
 

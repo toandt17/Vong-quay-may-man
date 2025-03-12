@@ -86,12 +86,6 @@
 
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
-                                <i class="fas fa-tachometer-alt me-2"></i>
-                                Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('admin.lucky-wheels.*') && !request()->routeIs('admin.lucky-wheels.prizes.*') ? 'active' : '' }}" href="{{ route('admin.lucky-wheels.index') }}">
                                 <i class="fas fa-dharmachakra me-2"></i>
                                 Vòng quay may mắn

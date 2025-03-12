@@ -10,6 +10,7 @@ use App\Models\Prize;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class LuckyWheelController extends Controller
 {
@@ -56,8 +57,8 @@ class LuckyWheelController extends Controller
             'ward' => 'required|string|max:255',
             'address' => 'required|string|max:255',
             'is_farmer' => 'boolean',
-            'rice_variety' => 'nullable|string|max:255',
-            'rice_stage' => 'nullable|string|max:255',
+            'rice_variety' => 'required_if:is_farmer,1|nullable|string|max:255',
+            'rice_stage' => 'required_if:is_farmer,1|nullable|string|max:255',
             'used_products' => 'nullable',
         ]);
 
@@ -69,12 +70,20 @@ class LuckyWheelController extends Controller
             if ($participant->hasSpun()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Số điện thoại này đã được sử dụng để tham gia vòng quay.',
-                ]);
+                    'message' => 'Số điện thoại này đã được sử dụng. Vui lòng dùng số khác.',
+                    'error_type' => 'phone_used'
+                ], 400);
             }
+
+            // Cập nhật thông tin cho người tham gia hiện tại
+            $participant->update($validated);
+
+            // Thông báo cho người dùng biết số điện thoại đã tồn tại nhưng vẫn cho phép tiếp tục
+            $message = 'Số điện thoại này đã được đăng ký. Thông tin của bạn đã được cập nhật.';
         } else {
             // Tạo người tham gia mới
             $participant = Participant::create($validated);
+            $message = 'Đăng ký thành công! Bạn có thể quay vòng quay may mắn ngay bây giờ.';
         }
 
         // Lấy vòng quay hiện tại
@@ -90,11 +99,24 @@ class LuckyWheelController extends Controller
         // Lấy danh sách giải thưởng có số lượng còn lại > 0
         $availablePrizes = $luckyWheel->prizes()->where('remaining', '>', 0)->get();
 
+        // Log số lượng giải thưởng còn available cho debug
+        Log::info('Số lượng giải thưởng còn available: ' . $availablePrizes->count());
+        Log::info('Danh sách giải thưởng còn available:', $availablePrizes->map(function ($prize) {
+            return [
+                'id' => $prize->id,
+                'name' => $prize->name,
+                'remaining' => $prize->remaining,
+                'win_rate' => $prize->win_rate
+            ];
+        })->toArray());
+
         // Bắt đầu quay ngầm và lưu kết quả
         DB::beginTransaction();
         try {
             // Nếu không còn giải thưởng nào
             if ($availablePrizes->isEmpty()) {
+                Log::warning('Không còn giải thưởng nào available.');
+
                 // Tạo lịch sử không trúng thưởng
                 $awardHistory = AwardHistory::create([
                     'participant_id' => $participant->id,
@@ -114,15 +136,74 @@ class LuckyWheelController extends Controller
                         'is_win' => false,
                         'message' => 'Rất tiếc, bạn không trúng thưởng.',
                     ],
-                    'message' => 'Đăng ký thành công! Bạn có thể quay vòng quay may mắn ngay bây giờ.',
+                    'message' => $message,
+                    'is_existed' => $participant->wasRecentlyCreated ? false : true,
                 ]);
             }
 
-            // Tính toán giải thưởng dựa trên tỷ lệ
-            $prize = $this->calculatePrize($availablePrizes);
+            // Tính toán giải thưởng dựa trên tỷ lệ - CHỈ với các giải còn available
+            // Đặt forceWin=true để khuyến khích hệ thống chọn một giải thưởng nếu có thể
+            $prize = $this->calculatePrize($availablePrizes, true);
+
+            if ($prize) {
+                Log::info('Quay ngầm đã chọn giải thưởng:', [
+                    'id' => $prize->id,
+                    'name' => $prize->name,
+                    'remaining' => $prize->remaining,
+                    'win_rate' => $prize->win_rate
+                ]);
+            } else {
+                Log::info('Quay ngầm không trúng giải nào.');
+            }
 
             // Nếu trúng thưởng
             if ($prize) {
+                // Kiểm tra lại xem giải thưởng có còn available không
+                if ($prize->remaining <= 0) {
+                    Log::warning('Giải thưởng đã hết nhưng vẫn được chọn. ID: ' . $prize->id);
+
+                    // Nếu hết rồi, kiểm tra lại danh sách giải available
+                    $remainingPrizes = $luckyWheel->prizes()->where('remaining', '>', 0)->get();
+
+                    if ($remainingPrizes->isEmpty()) {
+                        Log::warning('Tất cả giải thưởng đã hết.');
+
+                        // Tạo lịch sử không trúng thưởng
+                        $awardHistory = AwardHistory::create([
+                            'participant_id' => $participant->id,
+                            'lucky_wheel_id' => $luckyWheel->id,
+                            'prize_id' => null,
+                            'spin_time' => Carbon::now(),
+                            'is_win' => false,
+                        ]);
+
+                        DB::commit();
+
+                        return response()->json([
+                            'success' => true,
+                            'participant_id' => $participant->id,
+                            'lucky_wheel_id' => $luckyWheel->id,
+                            'pre_determined_result' => [
+                                'is_win' => false,
+                                'message' => 'Rất tiếc, bạn không trúng thưởng.',
+                            ],
+                            'message' => $message,
+                            'is_existed' => $participant->wasRecentlyCreated ? false : true,
+                        ]);
+                    } else {
+                        // Chọn giải thưởng ngẫu nhiên khác còn available
+                        $totalRate = $remainingPrizes->sum('win_rate');
+                        $randomPrizeIndex = mt_rand(0, $remainingPrizes->count() - 1);
+                        $prize = $remainingPrizes[$randomPrizeIndex];
+
+                        Log::info('Chọn lại giải thưởng khác còn available:', [
+                            'id' => $prize->id,
+                            'name' => $prize->name,
+                            'remaining' => $prize->remaining
+                        ]);
+                    }
+                }
+
                 // Giảm số lượng giải thưởng còn lại
                 $prize->decrement('remaining');
 
@@ -152,11 +233,12 @@ class LuckyWheelController extends Controller
                             'icon' => $prize->icon,
                             'win_rate' => $prize->win_rate,
                             'quantity' => $prize->quantity,
-                            'remaining' => $prize->remaining,
+                            'remaining' => $prize->remaining - 1, // Hiển thị giá trị sau khi đã giảm
                         ],
-                        'message' => 'Chúc mừng! Bạn đã trúng ' . $prize->name,
+                        'message' => 'Chúc mừng! ' . $prize->name,
                     ],
-                    'message' => 'Đăng ký thành công! Bạn có thể quay vòng quay may mắn ngay bây giờ.',
+                    'message' => $message,
+                    'is_existed' => $participant->wasRecentlyCreated ? false : true,
                 ]);
             } else {
                 // Tạo lịch sử không trúng thưởng
@@ -178,11 +260,15 @@ class LuckyWheelController extends Controller
                         'is_win' => false,
                         'message' => 'Rất tiếc, bạn không trúng thưởng.',
                     ],
-                    'message' => 'Đăng ký thành công! Bạn có thể quay vòng quay may mắn ngay bây giờ.',
+                    'message' => $message,
+                    'is_existed' => $participant->wasRecentlyCreated ? false : true,
                 ]);
             }
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Lỗi khi xử lý quay ngầm: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Đã xảy ra lỗi khi xử lý thông tin. Vui lòng thử lại sau.',
@@ -242,7 +328,7 @@ class LuckyWheelController extends Controller
                     'quantity' => $prize->quantity,
                     'remaining' => $prize->remaining,
                 ],
-                'message' => 'Chúc mừng! Bạn đã trúng ' . $prize->name,
+                'message' => 'Chúc mừng! ' . $prize->name,
             ]);
         } else {
             return response()->json([
@@ -255,11 +341,26 @@ class LuckyWheelController extends Controller
 
     /**
      * Tính toán giải thưởng dựa trên tỷ lệ.
+     *
+     * @param \Illuminate\Database\Eloquent\Collection $prizes Danh sách giải thưởng
+     * @param bool $forceWin Có bắt buộc trúng thưởng không (nếu còn giải)
+     * @return \App\Models\Prize|null
      */
-    private function calculatePrize($prizes)
+    private function calculatePrize($prizes, $forceWin = false)
     {
-        // Tổng tỷ lệ của tất cả giải thưởng
-        $totalRate = $prizes->sum('win_rate');
+        // Chỉ xét các giải thưởng còn số lượng
+        $availablePrizes = $prizes->filter(function($prize) {
+            return $prize->remaining > 0;
+        });
+
+        // Nếu không còn giải thưởng nào, trả về null
+        if ($availablePrizes->isEmpty()) {
+            Log::warning('Không còn giải thưởng nào có số lượng > 0.');
+            return null;
+        }
+
+        // Tổng tỷ lệ của tất cả giải thưởng còn available
+        $totalRate = $availablePrizes->sum('win_rate');
 
         // Nếu tổng tỷ lệ > 100%, điều chỉnh lại
         $adjustmentFactor = $totalRate > 100 ? 100 / $totalRate : 1;
@@ -268,25 +369,45 @@ class LuckyWheelController extends Controller
         $cumulativeRates = [];
         $cumulativeRate = 0;
 
-        foreach ($prizes as $prize) {
+        foreach ($availablePrizes as $prize) {
             $adjustedRate = $prize->win_rate * $adjustmentFactor;
             $cumulativeRate += $adjustedRate;
             $cumulativeRates[$prize->id] = $cumulativeRate;
         }
 
+        // Log thông tin tỷ lệ
+        Log::info('Tỷ lệ tích lũy của các giải còn available:', $cumulativeRates);
+
         // Tạo số ngẫu nhiên từ 0 đến tổng tỷ lệ (tối đa 100)
         $randomNumber = mt_rand(0, 10000) / 100; // Để có 2 chữ số thập phân
+        Log::info('Số ngẫu nhiên: ' . $randomNumber . ' / Tổng tỷ lệ: ' . min(100, $totalRate));
+
+        // Nếu forceWin = true và có giải thưởng, đảm bảo số ngẫu nhiên nằm trong phạm vi để trúng thưởng
+        if ($forceWin && !$availablePrizes->isEmpty() && $randomNumber > min(100, $totalRate)) {
+            $randomNumber = mt_rand(0, (int)($totalRate * 100)) / 100;
+            Log::info('Đã điều chỉnh số ngẫu nhiên để bắt buộc trúng thưởng: ' . $randomNumber);
+        }
 
         // Nếu số ngẫu nhiên lớn hơn tổng tỷ lệ, không trúng thưởng
         if ($randomNumber > min(100, $totalRate)) {
+            Log::info('Không trúng thưởng vì số ngẫu nhiên > tổng tỷ lệ');
             return null;
         }
 
         // Xác định giải thưởng dựa trên số ngẫu nhiên
         foreach ($cumulativeRates as $prizeId => $rate) {
             if ($randomNumber <= $rate) {
-                return $prizes->firstWhere('id', $prizeId);
+                $winningPrize = $availablePrizes->firstWhere('id', $prizeId);
+                Log::info('Đã chọn giải thưởng: ' . $winningPrize->name . ' (ID: ' . $prizeId . ')');
+                return $winningPrize;
             }
+        }
+
+        // Nếu đến đây mà vẫn chưa chọn được giải thưởng, chọn một giải ngẫu nhiên (safe fallback)
+        if ($forceWin && !$availablePrizes->isEmpty()) {
+            $randomPrize = $availablePrizes->random();
+            Log::warning('Không thể xác định giải thưởng dựa trên tỷ lệ, chọn ngẫu nhiên: ' . $randomPrize->name);
+            return $randomPrize;
         }
 
         return null;
