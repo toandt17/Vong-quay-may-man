@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\AwardHistoryExport;
 use App\Http\Controllers\Controller;
 use App\Models\AwardHistory;
 use App\Models\LuckyWheel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AwardHistoryController extends Controller
 {
@@ -51,20 +54,23 @@ class AwardHistoryController extends Controller
             ->latest();
 
         // Lọc theo vòng quay nếu có
-        if ($request->has('lucky_wheel_id')) {
+        if ($request->has('lucky_wheel_id') && $request->lucky_wheel_id) {
             $query->where('lucky_wheel_id', $request->lucky_wheel_id);
+            $wheelName = LuckyWheel::find($request->lucky_wheel_id)->name ?? '';
+            $fileName = 'lich-su-vong-quay-' . Str::slug($wheelName) . '-';
+        } else {
+            $fileName = 'lich-su-tat-ca-vong-quay-';
         }
 
         // Lọc theo trạng thái trúng thưởng
         if ($request->has('is_win')) {
             $query->where('is_win', $request->is_win);
+            $fileName .= $request->is_win ? 'trung-thuong-' : 'khong-trung-thuong-';
         }
 
-        $awardHistories = $query->get();
+        $fileName .= date('Y-m-d-H-i-s') . '.xlsx';
 
-        // Tạo file Excel và trả về cho người dùng tải xuống
-        // (Phần này sẽ cần thêm package để xuất Excel, ví dụ: maatwebsite/excel)
-
-        return redirect()->back()->with('success', 'Đã xuất danh sách lịch sử trúng thưởng thành công.');
+        // Xuất file Excel
+        return Excel::download(new AwardHistoryExport($query), $fileName);
     }
 }

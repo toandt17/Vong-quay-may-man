@@ -15,11 +15,12 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             // Chạy các seeder địa chỉ trước
-            // ProvinceTableSeeder::class,
-            // DistrictTableSeeder::class,
-            // WardTableSeeder::class,
+            ProvinceTableSeeder::class,
+            DistrictTableSeeder::class,
+            WardTableSeeder::class,
 
             // Sau đó chạy các seeder khác
+            UserSeeder::class,
             PrizeSeeder::class,
             // CategorySeeder::class,
             // ProductSeeder::class,

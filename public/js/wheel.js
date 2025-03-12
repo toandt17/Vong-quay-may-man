@@ -123,7 +123,6 @@ const createWheel = () => {
         text.style.color = colors.text;
         text.style.fontWeight = 'bold';
         text.style.fontSize = fontSize;
-        text.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)';
 
         wheel.appendChild(text);
 
@@ -167,60 +166,200 @@ window.addEventListener('resize', () => {
 
     // Hàm tìm vị trí phân đoạn dựa vào ID giải thưởng
     function findSegmentByPrizeId(prizeId) {
-        // Kiểm tra trong map trước
-        if (prizeIdToIndexMap.hasOwnProperty(prizeId)) {
-            return prizeIdToIndexMap[prizeId];
+        // Chuyển đổi prizeId thành số nguyên để so sánh chính xác
+        const targetPrizeId = parseInt(prizeId);
+
+        // Kiểm tra trong map trước (cách nhanh nhất)
+        if (prizeIdToIndexMap.hasOwnProperty(targetPrizeId)) {
+            return prizeIdToIndexMap[targetPrizeId];
         }
 
         // Tìm trong mảng prizes
-        const index = prizes.findIndex(p => parseInt(p.id) === parseInt(prizeId));
+        const index = prizes.findIndex(p => parseInt(p.id) === targetPrizeId);
         if (index !== -1) {
+            // Cập nhật map để lần sau tìm nhanh hơn
+            prizeIdToIndexMap[targetPrizeId] = index;
             return index;
         }
 
         // Không tìm thấy, trả về -1
-        console.error("Không tìm thấy giải thưởng ID:", prizeId);
+        console.error("Không tìm thấy giải thưởng ID:", targetPrizeId);
+
+        // Nếu không tìm thấy nhưng cần đảm bảo chính xác, trả về phân đoạn đầu tiên
+        if (wheelConfig.ensureExactPointer && prizes.length > 0) {
+            console.warn("Sử dụng phân đoạn đầu tiên thay thế");
+            return 0;
+        }
+
         return -1;
     }
 
     // Hiển thị kết quả trúng thưởng
     function showPrizeResult(prize, isWin) {
+        // Khởi tạo modal kết quả nếu chưa có
+        const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
+
+        // Xác nhận kết quả quay
+        const isCorrectResult = verifySpinResult(prize);
+
+        if (debugMode) {
+            console.log("Kết quả quay:", isWin ? "Trúng thưởng" : "Không trúng");
+            console.log("Giải thưởng từ server:", prize);
+            console.log("Kết quả chính xác:", isCorrectResult);
+        }
+
+        // Nếu kết quả không chính xác và cần đảm bảo chính xác 100%
+        if (!isCorrectResult && wheelConfig.ensureExactPointer && isWin && prize) {
+            console.warn("Phát hiện kết quả không chính xác, điều chỉnh lại vị trí vòng quay");
+
+            // Lấy vị trí phân đoạn chính xác
+            const correctSegment = findSegmentByPrizeId(prize.id);
+            if (correctSegment !== -1) {
+                // Tính toán góc chính xác
+                const totalPrizes = prizes.length;
+                const anglePerSegment = 360 / totalPrizes;
+                const correctAngle = 360 - (correctSegment * anglePerSegment) - (anglePerSegment / 2);
+
+                // Điều chỉnh vị trí vòng quay ngay lập tức
+                const wheel = document.getElementById('wheel');
+                if (wheel) {
+                    wheel.style.transition = 'transform 0.3s ease-out';
+                    wheel.style.transform = `rotate(${correctAngle}deg)`;
+                    wheel.dataset.currentRotation = correctAngle;
+
+                    if (debugMode) {
+                        console.log("Điều chỉnh vòng quay đến góc:", correctAngle);
+                    }
+                }
+            }
+        }
+
         if (isWin && prize) {
             // Trúng thưởng
+            $('#resultModal').addClass('win').removeClass('lose');
+            $('#result-modal-header').css('background', 'linear-gradient(135deg, var(--lucky-gold), var(--festival-red))');
+            $('#modal-result-title').text('Chúc mừng!');
+            $('#modal-result-message').text(`Bạn đã trúng ${prize.name}!`);
+
+            // Hiển thị thông tin chi tiết giải thưởng
+            $('#modal-prize-name').text(prize.name);
+            $('#modal-prize-description').text(prize.description || '');
+
+            // Hiển thị hình ảnh nếu có
+            if (prize.image) {
+                $('#modal-prize-image').attr('src', prize.image);
+                $('#modal-prize-image').show();
+            } else {
+                $('#modal-prize-image').hide();
+            }
+
+            // Hiển thị số lượng nếu có
+            // if (prize.quantity) {
+            //     $('#modal-prize-quantity').text(`Còn lại: ${prize.remaining}/${prize.quantity}`);
+            // } else {
+            //     $('#modal-prize-quantity').text('');
+            // }
+
+            $('#modal-prize-details').show();
+
+            // Hiển thị modal kết quả
+            resultModal.show();
+
+            // Hiệu ứng pháo hoa khi trúng thưởng
+            setTimeout(function() {
+                startConfetti();
+            }, 300);
+        } else {
+            // Không trúng thưởng
+            $('#resultModal').addClass('lose').removeClass('win');
+            $('#result-modal-header').css('background', 'linear-gradient(135deg, #6c757d, #343a40)');
+            $('#modal-result-title').text('Rất tiếc!');
+            $('#modal-result-message').text('Bạn không trúng giải lần này. Chúc may mắn lần sau!');
+            $('#modal-prize-details').hide();
+
+            // Hiển thị modal kết quả
+            resultModal.show();
+        }
+
+        // Vẫn hiển thị kết quả trực tiếp trên trang (có thể giữ lại hoặc bỏ)
+        if (isWin && prize) {
             $('#result-container').removeClass('lose-result').addClass('win-result');
             $('#result-title').text('Chúc mừng!');
             $('#result-message').text(`Bạn đã trúng ${prize.name}!`);
-
-            // Hiển thị thông tin chi tiết giải thưởng
             $('#prize-name').text(prize.name);
             $('#prize-description').text(prize.description || '');
-
-            // Hiển thị hình ảnh nếu có
             if (prize.image) {
                 $('#prize-image').attr('src', prize.image);
                 $('#prize-image').show();
             } else {
                 $('#prize-image').hide();
             }
-
-            // Hiển thị số lượng nếu có
-            if (prize.quantity) {
-                $('#prize-quantity').text(`Còn lại: ${prize.remaining}/${prize.quantity}`);
-            } else {
-                $('#prize-quantity').text('');
-            }
-
             $('#prize-details').show();
         } else {
-            // Không trúng thưởng
             $('#result-container').removeClass('win-result').addClass('lose-result');
             $('#result-title').text('Rất tiếc!');
             $('#result-message').text('Bạn không trúng giải lần này. Chúc may mắn lần sau!');
             $('#prize-details').hide();
         }
-
-        // Hiển thị kết quả với hiệu ứng
         $('#result-container').fadeIn().addClass('show');
+    }
+
+    // Hàm tạo hiệu ứng pháo hoa
+    function startConfetti() {
+        // Sử dụng thư viện canvas-confetti
+        confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#FFD700', '#FF0000', '#00FF00', '#0000FF', '#FF00FF']
+        });
+
+        // Tạo thêm pháo hoa ở nhiều vị trí
+        setTimeout(() => {
+            confetti({
+                particleCount: 100,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: ['#FFD700', '#FF0000', '#00FF00']
+            });
+        }, 250);
+
+        setTimeout(() => {
+            confetti({
+                particleCount: 100,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: ['#0000FF', '#FF00FF', '#FFD700']
+            });
+        }, 400);
+
+        // Pháo hoa liên tục trong 5 giây
+        const duration = 5 * 1000;
+        const end = Date.now() + duration;
+
+        (function frame() {
+            confetti({
+                particleCount: 2,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: ['#FFD700']
+            });
+
+            confetti({
+                particleCount: 2,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: ['#FF0000']
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        }());
     }
 
     // Khởi tạo modal
@@ -249,77 +388,171 @@ window.addEventListener('resize', () => {
             }
         });
 
-        // Xử lý dropdown giống lúa
-        $('#rice_variety_display').parent().find('.dropdown-item').click(function(e) {
-            e.preventDefault();
-            const value = $(this).data('value');
-            const text = $(this).text();
-            $('#rice_variety').val(value);
-            $('#rice_variety_display').val(text);
-        });
-
-        // Xử lý dropdown giai đoạn lúa
-        $('#rice_stage_display').parent().find('.dropdown-item').click(function(e) {
-            e.preventDefault();
-            const value = $(this).data('value');
-            const text = $(this).text();
-            $('#rice_stage').val(value);
-            $('#rice_stage_display').val(text);
-        });
-
-        // Xử lý dropdown sản phẩm đã sử dụng (multiple)
-        $('#used_products_display').parent().find('.dropdown-item').click(function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const checkbox = $(this).find('input[type="checkbox"]');
-            checkbox.prop('checked', !checkbox.prop('checked'));
-            updateUsedProducts();
-        });
-
-        // Ngăn dropdown đóng khi click vào checkbox
-        $('#used_products_display').parent().find('input[type="checkbox"]').click(function(e) {
-            e.stopPropagation();
-            $(this).prop('checked', !$(this).prop('checked'));
-            updateUsedProducts();
-        });
-
         // Hiển thị/ẩn trường giống lúa khi chọn là nông dân
         $('#is_farmer').change(function() {
             if($(this).is(':checked')) {
-                $('.farmer-field').show();
+                $('.farmer-fields').show();
                 $('#rice_variety, #rice_stage').prop('required', true);
+                // Kích hoạt kiểm tra xác thực cho các trường của nông dân
+                validateInput($('#rice_variety'), 'Vui lòng chọn giống lúa');
+                validateInput($('#rice_stage'), 'Vui lòng chọn giai đoạn lúa');
             } else {
-                $('.farmer-field').hide();
+                $('.farmer-fields').hide();
                 $('#rice_variety, #rice_stage').prop('required', false).val('');
-                $('#rice_variety_display, #rice_stage_display').val('');
+                // Xóa trạng thái lỗi và thông báo
+                $('#rice_variety, #rice_stage').removeClass('is-invalid is-valid');
                 // Reset used_products
-                $('#used_products').val([]);
-                $('#used_products_display').val('');
-                $('#used_products_display').parent().find('input[type="checkbox"]').prop('checked', false);
+                $('input[name="used_products[]"]').prop('checked', false);
+                $('#product-none').prop('checked', true);
             }
         });
 
-        // Hàm cập nhật hiển thị sản phẩm đã chọn
-        function updateUsedProducts() {
-            const selectedProducts = [];
-            const selectedValues = [];
-            $('#used_products_display').parent().find('input[type="checkbox"]:checked').each(function() {
-                const text = $(this).parent().text().trim();
-                const value = $(this).parent().parent().data('value');
-                selectedProducts.push(text);
-                selectedValues.push(value);
-            });
-            $('#used_products_display').val(selectedProducts.join(', ') || '');
-            $('#used_products').val(selectedValues);
+        // Kiểm tra các trường của nông dân khi thay đổi
+        $('#rice_variety, #rice_stage').on('change blur', function() {
+            if ($('#is_farmer').is(':checked')) {
+                validateInput($(this), 'Vui lòng chọn ' + $(this).attr('id').replace('_', ' '));
+            }
+        });
+
+        // Xử lý checkbox cho used_products
+        $('input[name="used_products[]"]').on('change', function() {
+            const $productNone = $('#product-none');
+
+            // Nếu đây là checkbox "Chưa sử dụng"
+            if (this.id === 'product-none') {
+                if (this.checked) {
+                    // Nếu "Chưa sử dụng" được chọn, bỏ chọn tất cả các checkbox khác
+                    $('input[name="used_products[]"]').not(this).prop('checked', false);
+                }
+            } else {
+                // Nếu đây là một sản phẩm khác và được chọn
+                if (this.checked) {
+                    // Bỏ chọn checkbox "Chưa sử dụng"
+                    $productNone.prop('checked', false);
+                } else {
+                    // Nếu không còn sản phẩm nào được chọn, chọn "Chưa sử dụng"
+                    if ($('input[name="used_products[]"]:checked').not($productNone).length === 0) {
+                        $productNone.prop('checked', true);
+                    }
+                }
+            }
+        });
+
+        // Kiểm tra tên khi người dùng nhập
+        $('#name').on('input blur', function() {
+            validateName($(this));
+        });
+
+        // Kiểm tra số điện thoại khi người dùng nhập
+        $('#phone').on('input blur', function() {
+            validatePhone($(this));
+        });
+
+        // Kiểm tra các trường select khi thay đổi
+        $('#province, #district, #ward').on('change blur', function() {
+            validateSelect($(this));
+        });
+
+        // Kiểm tra địa chỉ khi người dùng nhập
+        $('#address').on('input blur', function() {
+            validateInput($(this), 'Vui lòng nhập địa chỉ cụ thể');
+        });
+    }
+
+    // Hàm kiểm tra tên
+    function validateName(field) {
+        const value = field.val().trim();
+        const error = $('#name-error');
+
+        if (!value) {
+            field.addClass('is-invalid');
+            error.text('Họ tên không được để trống');
+            return false;
+        } else {
+            field.removeClass('is-invalid').addClass('is-valid');
+            error.text('');
+            return true;
+        }
+    }
+
+    // Hàm kiểm tra số điện thoại
+    function validatePhone(field) {
+        const value = field.val().trim();
+        const error = $('#phone-error');
+        const phoneRegex = /^[0-9]{10,11}$/;
+
+        if (!value) {
+            field.addClass('is-invalid');
+            error.text('Số điện thoại không được để trống');
+            return false;
+        } else if (!/^[0-9]+$/.test(value)) {
+            field.addClass('is-invalid');
+            error.text('Số điện thoại chỉ được chứa chữ số');
+            return false;
+        } else if (!phoneRegex.test(value)) {
+            field.addClass('is-invalid');
+            error.text('Số điện thoại phải có 10 đến 11 chữ số');
+            return false;
+        } else {
+            field.removeClass('is-invalid').addClass('is-valid');
+            error.text('');
+            return true;
+        }
+    }
+
+    // Hàm kiểm tra các select
+    function validateSelect(field) {
+        const value = field.val();
+        const id = field.attr('id');
+        const error = $(`#${id}-error`);
+
+        if (!value) {
+            field.addClass('is-invalid');
+            return false;
+        } else {
+            field.removeClass('is-invalid').addClass('is-valid');
+            error.text('');
+            return true;
+        }
+    }
+
+    // Hàm kiểm tra input chung
+    function validateInput(field, errorMsg) {
+        const value = field.val().trim();
+        const id = field.attr('id');
+        const error = $(`#${id}-error`);
+
+        if (!value) {
+            field.addClass('is-invalid');
+            error.text(errorMsg);
+            return false;
+        } else {
+            field.removeClass('is-invalid').addClass('is-valid');
+            error.text('');
+            return true;
         }
     }
 
     // Hàm submit form đăng ký từ modal
     function submitRegistrationForm() {
         // Kiểm tra validate form
-        const form = document.getElementById('registration-form');
-        if (!form.checkValidity()) {
-            form.reportValidity();
+        let isValid = true;
+
+        // Validate các trường cơ bản
+        isValid = validateName($('#name')) && isValid;
+        isValid = validatePhone($('#phone')) && isValid;
+        isValid = validateSelect($('#province')) && isValid;
+        isValid = validateSelect($('#district')) && isValid;
+        isValid = validateSelect($('#ward')) && isValid;
+        isValid = validateInput($('#address'), 'Vui lòng nhập địa chỉ cụ thể') && isValid;
+
+        // Nếu là nông dân thì validate thêm các trường
+        if ($('#is_farmer').is(':checked')) {
+            isValid = validateInput($('#rice_variety'), 'Vui lòng chọn giống lúa') && isValid;
+            isValid = validateInput($('#rice_stage'), 'Vui lòng chọn giai đoạn lúa') && isValid;
+        }
+
+        if (!isValid) {
             return;
         }
 
@@ -327,25 +560,37 @@ window.addEventListener('resize', () => {
         $('#submit-registration').prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...');
 
         // Lấy dữ liệu form
-        const formData = {
-            name: $('#name').val(),
-            phone: $('#phone').val(),
-            province: $('#province').val(),
-            district: $('#district').val(),
-            ward: $('#ward').val(),
-            address: $('#address').val(),
-            is_farmer: $('#is_farmer').is(':checked') ? 1 : 0,
-            rice_variety: $('#rice_variety').val(),
-            rice_stage: $('#rice_stage').val(),
-            used_products: $('#used_products').val() ? $('#used_products').val().join(', ') : '',
-            _token: $('meta[name="csrf-token"]').attr('content')
-        };
+        const form = document.getElementById('registration-form');
+        const formData = new FormData(form);
+
+        // Thu thập dữ liệu
+        const formDataObj = {};
+        for (const [key, value] of formData.entries()) {
+            // Xử lý đặc biệt cho trường hợp mảng
+            if (key.endsWith('[]')) {
+                const baseKey = key.slice(0, -2);
+                if (!formDataObj[baseKey]) {
+                    formDataObj[baseKey] = [];
+                }
+                formDataObj[baseKey].push(value);
+            } else {
+                formDataObj[key] = value;
+            }
+        }
+
+        // Xử lý sản phẩm đã sử dụng
+        const selectedProducts = $('input[name="used_products[]"]:checked').map(function() {
+            return this.value;
+        }).get();
+
+        // Chuyển đổi mảng sản phẩm thành chuỗi được phân tách bằng dấu phẩy
+        formDataObj.used_products = selectedProducts.join(', ');
 
         // Gửi request đăng ký
         $.ajax({
             url: registerUrl,
             type: 'POST',
-            data: formData,
+            data: formDataObj,
             success: function(response) {
                 if (response.success) {
                     // Đóng modal đăng ký
@@ -362,6 +607,15 @@ window.addEventListener('resize', () => {
                     participantId = response.participant_id;
                     isRegistered = true;
 
+                    // Lưu kết quả đã xác định trước
+                    if (response.pre_determined_result) {
+                        window.preDeterminedResult = response.pre_determined_result;
+
+                        if (debugMode) {
+                            console.log("Kết quả quay ngầm:", window.preDeterminedResult);
+                        }
+                    }
+
                     // Enable nút quay
                     $('#spin-button').prop('disabled', false);
 
@@ -372,16 +626,6 @@ window.addEventListener('resize', () => {
                     if (typeof window.animateWheelAfterRegistration === 'function') {
                         window.animateWheelAfterRegistration();
                     }
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Đăng ký thất bại!',
-                        text: response.message,
-                        confirmButtonColor: '#dc3545'
-                    });
-
-                    // Enable lại nút submit
-                    $('#submit-registration').prop('disabled', false).html('ĐĂNG KÝ');
                 }
             },
             error: function(xhr) {
@@ -399,8 +643,8 @@ window.addEventListener('resize', () => {
                     confirmButtonColor: '#dc3545'
                 });
 
-                // Enable lại nút submit
-                $('#submit-registration').prop('disabled', false).html('ĐĂNG KÝ');
+                // Re-enable nút submit
+                $('#submit-registration').prop('disabled', false).html('<i class="fas fa-paper-plane me-2"></i> ĐĂNG KÝ');
             }
         });
     }
@@ -418,13 +662,6 @@ window.addEventListener('resize', () => {
         // Thêm hiệu ứng nhấp nháy cho nút quay
         $('#spin-button').addClass('animate__animated animate__pulse animate__infinite');
     }
-
-    // Tương tác cho nút ở giữa vòng quay
-    $(document).on('click', '.wheel-center', function() {
-        if (!$('#spin-button').prop('disabled') && !isSpinning) {
-            $('#spin-button').trigger('click');
-        }
-    });
 
     // Xử lý quay vòng quay
     $('#spin-button').click(function() {
@@ -462,152 +699,287 @@ window.addEventListener('resize', () => {
             wheel.style.transform = `rotate(${tempRotation}deg)`;
         }, 50);
 
-        // Gửi request quay đến server
-        $.ajax({
-            url: spinUrl,
-            type: 'POST',
-            data: {
-                participant_id: participantId,
-                lucky_wheel_id: luckyWheelId,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                // Dừng hiệu ứng quay tạm thời
-                clearInterval(tempRotationInterval);
+        // Sử dụng kết quả đã xác định trước
+        if (window.preDeterminedResult) {
+            // Dừng hiệu ứng quay tạm thời
+            clearInterval(tempRotationInterval);
 
-                if (response.success) {
-                    // Lấy thông tin về giải thưởng từ server
-                    const isWin = response.is_win;
-                    const prize = response.prize;
+            const predeterminedData = window.preDeterminedResult;
+            const isWin = predeterminedData.is_win;
+            const prize = predeterminedData.prize;
 
-                    // Debug thông tin
+            // Debug thông tin
+            if (debugMode) {
+                console.log("Kết quả xác định trước:", predeterminedData);
+                console.log("Trúng thưởng:", isWin);
+                console.log("Giải thưởng:", prize);
+            }
+
+            // Nếu trúng thưởng và có thông tin giải
+            if (isWin && prize) {
+                // Tìm vị trí phân đoạn tương ứng với giải thưởng
+                const prizeSegmentIndex = findSegmentByPrizeId(prize.id);
+
+                if (prizeSegmentIndex !== -1) {
+                    // QUAN TRỌNG: Hiệu chỉnh góc quay để đảm bảo mũi tên trỏ đúng vào giải thưởng
+                    // Phân tích: mũi tên nằm ở góc 0 độ (trên cùng), và vòng quay quay ngược chiều kim đồng hồ
+                    const totalPrizes = prizes.length;
+                    const anglePerSegment = 360 / totalPrizes;
+
+                    // Góc cơ bản để mũi tên trỏ vào giữa phân đoạn
+                    // Công thức: 360 - (index * góc mỗi phân đoạn) - (góc mỗi phân đoạn / 2)
+                    // Trừ đi góc mỗi phân đoạn / 2 để trỏ vào giữa phân đoạn
+                    let targetAngle = 360 - (prizeSegmentIndex * anglePerSegment) - (anglePerSegment / 2);
+
+                    // Đảm bảo targetAngle nằm trong khoảng [0, 360)
+                    targetAngle = targetAngle % 360;
+                    if (targetAngle < 0) targetAngle += 360;
+
+                    // Bù trừ góc cho mũi tên
+                    // Sử dụng offset multiplier để điều chỉnh vị trí chính xác
+                    const offsetMultiplier = wheelConfig.angleOffset || 0;
+                    // Tính góc offset dựa trên số phân đoạn cần dịch chuyển
+                    const offsetAngle = anglePerSegment * offsetMultiplier;
+                    // Góc cuối cùng sau khi điều chỉnh
+                    const adjustedAngle = targetAngle + offsetAngle;
+
+                    // Đảm bảo adjustedAngle nằm trong khoảng [0, 360)
+                    const finalTargetAngle = adjustedAngle % 360;
+
                     if (debugMode) {
-                        console.log("Server trả về:", response);
-                        console.log("Trúng thưởng:", isWin);
-                        console.log("Giải thưởng:", prize);
+                        console.log(`Phân đoạn mục tiêu: ${prizeSegmentIndex} (ID: ${prize.id})`);
+                        console.log(`Góc cơ bản: ${targetAngle}°`);
+                        console.log(`Điều chỉnh góc: ${offsetAngle}° (${offsetMultiplier} phân đoạn)`);
+                        console.log(`Góc cuối cùng: ${finalTargetAngle}°`);
                     }
 
-                    // Nếu trúng thưởng và có thông tin giải
-                    if (isWin && prize) {
-                        // Tìm vị trí phân đoạn tương ứng với giải thưởng
-                        const prizeSegmentIndex = findSegmentByPrizeId(prize.id);
+                    // Số vòng quay cố định + góc cuối cùng
+                    const rotations = wheelConfig.spinEffect?.rotations || 5;
+                    const totalRotation = (rotations * 360) + finalTargetAngle;
+                    const duration = wheelConfig.spinEffect?.duration || 5000;
 
-                        if (prizeSegmentIndex !== -1) {
-                            // QUAN TRỌNG: Hiệu chỉnh góc quay để đảm bảo mũi tên trỏ đúng vào giải thưởng
-                            // Phân tích: mũi tên nằm ở góc 0 độ (trên cùng), và vòng quay quay ngược chiều kim đồng hồ
+                    if (debugMode) {
+                        console.log("Số phân đoạn:", totalPrizes);
+                        console.log("Góc mỗi phân đoạn:", anglePerSegment);
+                        console.log("Tổng góc quay:", totalRotation);
+                    }
+
+                    // Bắt đầu animation quay
+                    spinToPosition(wheel, tempRotation, totalRotation, duration, function() {
+                        // Kiểm tra xem vị trí hiện tại có chính xác không
+                        const isPositionCorrect = verifySpinResult(prize);
+
+                        if (isPositionCorrect) {
+                            // Hiển thị kết quả khi quay xong và vị trí chính xác
+                            showPrizeResult(prize, true);
+                            isSpinning = false;
+
+                            // Disable nút quay vĩnh viễn (mỗi người chỉ được quay 1 lần)
+                            $('#spin-button').prop('disabled', true).text('Đã sử dụng lượt quay');
+                        } else {
+                            // Nếu vị trí không chính xác, điều chỉnh
+                            adjustToCorrectPosition(prize, function() {
+                                showPrizeResult(prize, true);
+                                isSpinning = false;
+                                $('#spin-button').prop('disabled', true).text('Đã sử dụng lượt quay');
+                            });
+                        }
+                    });
+                } else {
+                    console.error("Không tìm thấy phân đoạn cho giải thưởng:", prize.id);
+                    isSpinning = false;
+                    $('#spin-button').prop('disabled', false).text('QUAY NGAY!');
+                }
+            } else {
+                // Nếu không trúng thưởng, quay đến một vị trí ngẫu nhiên (không phải vị trí của giải thưởng)
+                const totalPrizes = prizes.length;
+                const anglePerSegment = 360 / totalPrizes;
+
+                // Tạo một góc ngẫu nhiên
+                const randomAngle = Math.floor(Math.random() * 360);
+
+                // Số vòng quay cố định + góc ngẫu nhiên
+                const rotations = wheelConfig.spinEffect?.rotations || 5;
+                const totalRotation = (rotations * 360) + randomAngle;
+                const duration = wheelConfig.spinEffect?.duration || 5000;
+
+                // Bắt đầu animation quay
+                spinToPosition(wheel, tempRotation, totalRotation, duration, function() {
+                    // Hiển thị kết quả không trúng thưởng
+                    showPrizeResult(null, false);
+                    isSpinning = false;
+
+                    // Disable nút quay vĩnh viễn (mỗi người chỉ được quay 1 lần)
+                    $('#spin-button').prop('disabled', true).text('Đã sử dụng lượt quay');
+                });
+            }
+        } else {
+            // Nếu không có kết quả xác định trước, thực hiện gọi API để lấy kết quả
+            // Gửi request quay đến server
+            $.ajax({
+                url: spinUrl,
+                type: 'POST',
+                data: {
+                    participant_id: participantId,
+                    lucky_wheel_id: luckyWheelId,
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    // Dừng hiệu ứng quay tạm thời
+                    clearInterval(tempRotationInterval);
+
+                    if (response.success) {
+                        // Lấy thông tin về giải thưởng từ server
+                        const isWin = response.is_win;
+                        const prize = response.prize;
+
+                        // Debug thông tin
+                        if (debugMode) {
+                            console.log("Server trả về:", response);
+                            console.log("Trúng thưởng:", isWin);
+                            console.log("Giải thưởng:", prize);
+                        }
+
+                        // Nếu trúng thưởng và có thông tin giải
+                        if (isWin && prize) {
+                            // Tìm vị trí phân đoạn tương ứng với giải thưởng
+                            const prizeSegmentIndex = findSegmentByPrizeId(prize.id);
+
+                            if (prizeSegmentIndex !== -1) {
+                                // QUAN TRỌNG: Hiệu chỉnh góc quay để đảm bảo mũi tên trỏ đúng vào giải thưởng
+                                // Phân tích: mũi tên nằm ở góc 0 độ (trên cùng), và vòng quay quay ngược chiều kim đồng hồ
+                                const totalPrizes = prizes.length;
+                                const anglePerSegment = 360 / totalPrizes;
+
+                                // Góc cơ bản để mũi tên trỏ vào giữa phân đoạn
+                                // Công thức: 360 - (index * góc mỗi phân đoạn) - (góc mỗi phân đoạn / 2)
+                                // Trừ đi góc mỗi phân đoạn / 2 để trỏ vào giữa phân đoạn
+                                let targetAngle = 360 - (prizeSegmentIndex * anglePerSegment) - (anglePerSegment / 2);
+
+                                // Đảm bảo targetAngle nằm trong khoảng [0, 360)
+                                targetAngle = targetAngle % 360;
+                                if (targetAngle < 0) targetAngle += 360;
+
+                                // Bù trừ góc cho mũi tên
+                                // Sử dụng offset multiplier để điều chỉnh vị trí chính xác
+                                const offsetMultiplier = wheelConfig.angleOffset || 0;
+                                // Tính góc offset dựa trên số phân đoạn cần dịch chuyển
+                                const offsetAngle = anglePerSegment * offsetMultiplier;
+                                // Góc cuối cùng sau khi điều chỉnh
+                                const adjustedAngle = targetAngle + offsetAngle;
+
+                                // Đảm bảo adjustedAngle nằm trong khoảng [0, 360)
+                                const finalTargetAngle = adjustedAngle % 360;
+
+                                if (debugMode) {
+                                    console.log(`Phân đoạn mục tiêu: ${prizeSegmentIndex} (ID: ${prize.id})`);
+                                    console.log(`Góc cơ bản: ${targetAngle}°`);
+                                    console.log(`Điều chỉnh góc: ${offsetAngle}° (${offsetMultiplier} phân đoạn)`);
+                                    console.log(`Góc cuối cùng: ${finalTargetAngle}°`);
+                                }
+
+                                // Số vòng quay cố định + góc cuối cùng
+                                const rotations = wheelConfig.spinEffect?.rotations || 5;
+                                const totalRotation = (rotations * 360) + finalTargetAngle;
+                                const duration = wheelConfig.spinEffect?.duration || 5000;
+
+                                if (debugMode) {
+                                    console.log("Số phân đoạn:", totalPrizes);
+                                    console.log("Góc mỗi phân đoạn:", anglePerSegment);
+                                    console.log("Tổng góc quay:", totalRotation);
+                                }
+
+                                // Bắt đầu animation quay
+                                spinToPosition(wheel, tempRotation, totalRotation, duration, function() {
+                                    // Kiểm tra xem vị trí hiện tại có chính xác không
+                                    const isPositionCorrect = verifySpinResult(prize);
+
+                                    if (isPositionCorrect) {
+                                        // Hiển thị kết quả khi quay xong và vị trí chính xác
+                                        showPrizeResult(prize, true);
+                                        isSpinning = false;
+
+                                        // Disable nút quay vĩnh viễn (mỗi người chỉ được quay 1 lần)
+                                        $('#spin-button').prop('disabled', true).text('Đã sử dụng lượt quay');
+                                    } else {
+                                        // Nếu vị trí không chính xác, điều chỉnh
+                                        adjustToCorrectPosition(prize, function() {
+                                            showPrizeResult(prize, true);
+                                            isSpinning = false;
+                                            $('#spin-button').prop('disabled', true).text('Đã sử dụng lượt quay');
+                                        });
+                                    }
+                                });
+                            } else {
+                                console.error("Không tìm thấy phân đoạn cho giải thưởng:", prize.id);
+                                isSpinning = false;
+                                $('#spin-button').prop('disabled', false).text('QUAY NGAY!');
+                            }
+                        } else {
+                            // Nếu không trúng thưởng, quay đến một vị trí ngẫu nhiên (không phải vị trí của giải thưởng)
                             const totalPrizes = prizes.length;
                             const anglePerSegment = 360 / totalPrizes;
 
-                            // Góc cơ bản để mũi tên trỏ vào giữa phân đoạn
-                            const targetAngle = 360 - (prizeSegmentIndex * anglePerSegment) - (anglePerSegment / 2);
+                            // Tạo một góc ngẫu nhiên
+                            const randomAngle = Math.floor(Math.random() * 360);
 
-                            // Bù trừ góc cho mũi tên
-                            // Nếu góc offset âm, tức là cần dịch chuyển ngược lại
-                            const offsetMultiplier = wheelConfig.angleOffset || 0;
-                            const offsetAngle = anglePerSegment * offsetMultiplier;
-                            const adjustedAngle = targetAngle + offsetAngle;
-
-                            if (debugMode) {
-                                console.log(`Góc cơ bản: ${targetAngle}°`);
-                                console.log(`Điều chỉnh góc: ${offsetAngle}° (${offsetMultiplier} phân đoạn)`);
-                                console.log(`Góc cuối cùng: ${adjustedAngle}°`);
-                            }
-
-                            const rotations = wheelConfig.spinEffect?.rotations || 5; // Số vòng quay cố định
-                            const totalRotation = (rotations * 360) + adjustedAngle;
-                            const duration = wheelConfig.spinEffect?.duration || 5000; // Thời gian quay
-
-                            if (debugMode) {
-                                console.log("Số phân đoạn:", totalPrizes);
-                                console.log("Góc mỗi phân đoạn:", anglePerSegment);
-                                console.log("Phân đoạn mục tiêu:", prizeSegmentIndex);
-                                console.log("Tổng góc quay:", totalRotation);
-                            }
+                            // Số vòng quay cố định + góc ngẫu nhiên
+                            const rotations = wheelConfig.spinEffect?.rotations || 5;
+                            const totalRotation = (rotations * 360) + randomAngle;
+                            const duration = wheelConfig.spinEffect?.duration || 5000;
 
                             // Bắt đầu animation quay
                             spinToPosition(wheel, tempRotation, totalRotation, duration, function() {
-                                // Hiển thị kết quả khi quay xong
-                                showPrizeResult(prize, true);
+                                // Hiển thị kết quả không trúng thưởng
+                                showPrizeResult(null, false);
                                 isSpinning = false;
 
                                 // Disable nút quay vĩnh viễn (mỗi người chỉ được quay 1 lần)
                                 $('#spin-button').prop('disabled', true).text('Đã sử dụng lượt quay');
                             });
-                        } else {
-                            // Không tìm thấy phân đoạn - hiển thị lỗi
-                            console.error("Không tìm thấy phân đoạn cho giải thưởng:", prize);
-                            isSpinning = false;
-                            $('#spin-button').prop('disabled', false).text('QUAY NGAY!');
-
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Lỗi vòng quay!',
-                                text: 'Không thể xác định vị trí giải thưởng trên vòng quay.',
-                                confirmButtonColor: '#dc3545'
-                            });
                         }
                     } else {
-                        // Không trúng thưởng - quay đến một vị trí ngẫu nhiên
-                        const randomSegment = Math.floor(Math.random() * prizes.length);
-                        const anglePerSegment = 360 / prizes.length;
-
-                        // Tính toán góc cơ bản
-                        const targetAngle = 360 - (randomSegment * anglePerSegment) - (anglePerSegment / 2);
-
-                        // Áp dụng offset tương tự
-                        const offsetMultiplier = wheelConfig.angleOffset || 0;
-                        const offsetAngle = anglePerSegment * offsetMultiplier;
-                        const adjustedAngle = targetAngle + offsetAngle;
-
-                        const rotations = wheelConfig.spinEffect?.rotations || 5; // Số vòng quay cố định
-                        const totalRotation = (rotations * 360) + adjustedAngle;
-                        const duration = wheelConfig.spinEffect?.duration || 5000; // Thời gian quay
-
-                        // Bắt đầu animation quay
-                        spinToPosition(wheel, tempRotation, totalRotation, duration, function() {
-                            // Hiển thị kết quả khi quay xong
-                            showPrizeResult(null, false);
-                            isSpinning = false;
-
-                            // Disable nút quay vĩnh viễn (mỗi người chỉ được quay 1 lần)
-                            $('#spin-button').prop('disabled', true).text('Đã sử dụng lượt quay');
+                        // Nếu có lỗi từ server
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Có lỗi xảy ra',
+                            text: response.message || 'Không thể quay thưởng. Vui lòng thử lại sau.',
+                            confirmButtonColor: '#dc3545'
                         });
+
+                        isSpinning = false;
+                        $('#spin-button').prop('disabled', false).text('QUAY NGAY!');
                     }
-                } else {
-                    // Server trả về lỗi
-                    isSpinning = false;
-                    $('#spin-button').prop('disabled', false).text('QUAY NGAY!');
+                },
+                error: function(xhr) {
+                    // Dừng hiệu ứng quay tạm thời
+                    clearInterval(tempRotationInterval);
+
+                    let errorMessage = 'Đã xảy ra lỗi khi quay thưởng.';
+
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
 
                     Swal.fire({
                         icon: 'error',
                         title: 'Quay thưởng thất bại!',
-                        text: response.message,
+                        text: errorMessage,
                         confirmButtonColor: '#dc3545'
                     });
+
+                    isSpinning = false;
+                    $('#spin-button').prop('disabled', false).text('QUAY NGAY!');
                 }
-            },
-            error: function() {
-                // Dừng hiệu ứng quay tạm thời
-                clearInterval(tempRotationInterval);
-                isSpinning = false;
-
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Quay thưởng thất bại!',
-                    text: 'Đã xảy ra lỗi khi quay thưởng. Vui lòng thử lại sau.',
-                    confirmButtonColor: '#dc3545'
-                });
-
-                // Enable lại nút quay
-                $('#spin-button').prop('disabled', false).text('QUAY NGAY!');
-            }
-        });
+            });
+        }
     });
 
     // Hàm quay vòng quay đến vị trí xác định
     function spinToPosition(wheel, startRotation, targetRotation, duration, callback) {
         let startTime = null;
-        const easeOut = t => 1 - Math.pow(1 - t, 3); // Hàm easing mượt mà
+        // Sử dụng hàm easing mượt mà hơn để có hiệu ứng tự nhiên
+        const easeOut = t => (--t) * t * t + 1;
 
         function animate(currentTime) {
             if (!startTime) startTime = currentTime;
@@ -625,12 +997,22 @@ window.addEventListener('resize', () => {
                 // Tiếp tục animation
                 requestAnimationFrame(animate);
             } else {
-                // Đảm bảo vòng quay dừng ở đúng vị trí
-                wheel.style.transform = `rotate(${startRotation + targetRotation}deg)`;
+                // Đảm bảo vòng quay dừng ở đúng vị trí mục tiêu
+                const finalRotation = startRotation + targetRotation;
+                wheel.style.transform = `rotate(${finalRotation}deg)`;
+
+                // Lưu lại góc quay cuối cùng để tham chiếu sau này
+                wheel.dataset.currentRotation = finalRotation;
+
+                // Thêm class để đánh dấu vòng quay đã dừng
+                wheel.classList.add('wheel-stopped');
 
                 // Gọi callback khi hoàn tất
                 if (typeof callback === 'function') {
-                    callback();
+                    // Thêm timeout nhỏ để đảm bảo animation đã hoàn tất
+                    setTimeout(() => {
+                        callback();
+                    }, 100);
                 }
             }
         }
@@ -781,5 +1163,171 @@ window.addEventListener('resize', () => {
 
     // Chạy hàm khởi tạo
     init();
+
+    // Hàm kiểm tra vị trí mũi tên và phân đoạn
+    function checkPointerPosition() {
+        const wheel = document.getElementById('wheel');
+        if (!wheel) return null;
+
+        // Lấy góc quay hiện tại
+        const currentRotation = parseFloat(wheel.dataset.currentRotation || 0);
+
+        // Tính toán phân đoạn hiện tại dựa trên góc quay
+        const totalPrizes = prizes.length;
+        const anglePerSegment = 360 / totalPrizes;
+
+        // Tính toán góc tương đối (0-360)
+        const relativeAngle = currentRotation % 360;
+        // Chuyển đổi góc tương đối thành góc dương (0-360)
+        const positiveAngle = relativeAngle < 0 ? relativeAngle + 360 : relativeAngle;
+
+        // Tính toán phân đoạn hiện tại
+        // Công thức: Math.floor((360 - positiveAngle) / anglePerSegment) % totalPrizes
+        const currentSegment = Math.floor((360 - positiveAngle) / anglePerSegment) % totalPrizes;
+
+        // Tìm giải thưởng tương ứng với phân đoạn hiện tại
+        const currentPrize = prizes[currentSegment];
+
+        if (debugMode) {
+            console.log("Kiểm tra vị trí mũi tên:");
+            console.log("Góc quay hiện tại:", currentRotation);
+            console.log("Góc tương đối (0-360):", positiveAngle);
+            console.log("Phân đoạn hiện tại:", currentSegment);
+            console.log("Giải thưởng hiện tại:", currentPrize);
+        }
+
+        return {
+            segment: currentSegment,
+            prize: currentPrize,
+            angle: positiveAngle
+        };
+    }
+
+    // Hàm xác nhận kết quả quay
+    function verifySpinResult(expectedPrize) {
+        const pointerPosition = checkPointerPosition();
+        if (!pointerPosition || !pointerPosition.prize) return false;
+
+        // Nếu không có giải thưởng kỳ vọng, luôn trả về true
+        if (!expectedPrize) return true;
+
+        // So sánh ID giải thưởng
+        const isCorrect = parseInt(pointerPosition.prize.id) === parseInt(expectedPrize.id);
+
+        if (debugMode) {
+            console.log("Xác nhận kết quả quay:");
+            console.log("Giải thưởng kỳ vọng:", expectedPrize);
+            console.log("Giải thưởng thực tế:", pointerPosition.prize);
+            console.log("Kết quả chính xác:", isCorrect);
+        }
+
+        // Nếu vị trí không chính xác, điều chỉnh vòng quay
+        if (!isCorrect && wheelConfig.ensureExactPointer) {
+            // Thêm callback để hiển thị kết quả sau khi điều chỉnh xong
+            adjustToCorrectPosition(expectedPrize, function() {
+                showPrizeResult(expectedPrize, true);
+            });
+            return false;
+        }
+        return isCorrect;
+    }
+
+    // Hàm điều chỉnh vòng quay đến vị trí chính xác của giải thưởng
+    function adjustToCorrectPosition(expectedPrize, callback) {
+        // Tìm phân đoạn tương ứng với giải thưởng mong đợi
+        const prizeSegmentIndex = findSegmentByPrizeId(expectedPrize.id);
+        if (prizeSegmentIndex === -1) {
+            console.error("Không tìm thấy phân đoạn cho giải thưởng:", expectedPrize);
+            if (typeof callback === 'function') callback();
+            return;
+        }
+
+        const wheel = document.getElementById('wheel');
+        if (!wheel) return;
+
+        // Lấy góc quay hiện tại
+        const currentRotation = parseFloat(wheel.dataset.currentRotation || 0);
+
+        // Tính toán góc cần quay đến
+        const totalPrizes = prizes.length;
+        const anglePerSegment = 360 / totalPrizes;
+
+        // Góc cơ bản để mũi tên trỏ vào giữa phân đoạn
+        let targetAngle = 360 - (prizeSegmentIndex * anglePerSegment) - (anglePerSegment / 2);
+
+        // Đảm bảo targetAngle nằm trong khoảng [0, 360)
+        targetAngle = targetAngle % 360;
+        if (targetAngle < 0) targetAngle += 360;
+
+        // Bù trừ góc cho mũi tên
+        const offsetMultiplier = wheelConfig.angleOffset || 0;
+        const offsetAngle = anglePerSegment * offsetMultiplier;
+        const adjustedAngle = targetAngle + offsetAngle;
+
+        // Đảm bảo adjustedAngle nằm trong khoảng [0, 360)
+        const finalTargetAngle = adjustedAngle % 360;
+
+        // Tính toán góc quay cần điều chỉnh (góc tương đối)
+        // Cần tính toán sao cho vòng quay quay theo đường ngắn nhất đến vị trí mới
+        const currentAngleNormalized = currentRotation % 360;
+        const currentPositiveAngle = currentAngleNormalized < 0 ? currentAngleNormalized + 360 : currentAngleNormalized;
+
+        // Tìm đường đi ngắn nhất (theo chiều kim đồng hồ hoặc ngược chiều)
+        let adjustmentAngle = finalTargetAngle - currentPositiveAngle;
+
+        // Đảm bảo góc điều chỉnh theo đường ngắn nhất
+        if (Math.abs(adjustmentAngle) > 180) {
+            adjustmentAngle = adjustmentAngle > 0 ? adjustmentAngle - 360 : adjustmentAngle + 360;
+        }
+
+        // Thêm một vòng quay đầy đủ (360 độ) trước khi đến vị trí giải thưởng
+        adjustmentAngle += 360;
+
+        if (debugMode) {
+            console.log("Điều chỉnh vị trí vòng quay:");
+            console.log("Góc hiện tại:", currentPositiveAngle);
+            console.log("Góc mục tiêu:", finalTargetAngle);
+            console.log("Góc điều chỉnh (với 1 vòng bổ sung):", adjustmentAngle);
+        }
+
+        // Quay chậm đến vị trí chính xác (thời gian quay tỷ lệ với góc điều chỉnh)
+        // Điều chỉnh tốc độ quay cho phù hợp - đảm bảo tổng thời gian quay khoảng 3.6 giây
+        const totalDegrees = Math.abs(adjustmentAngle);
+        const adjustmentDuration = 3600; // 3.6 giây - thời gian cố định cho animation
+
+        if (debugMode) {
+            console.log("Tổng độ cần quay:", totalDegrees);
+            console.log("Thời gian điều chỉnh:", adjustmentDuration + "ms");
+        }
+
+        // Thêm class để có hiệu ứng chuyển động mượt hơn
+        wheel.classList.add('wheel-adjusting');
+
+        // Sử dụng hàm spinToPosition với góc điều chỉnh
+        spinToPosition(wheel, currentRotation, adjustmentAngle, adjustmentDuration, function() {
+            if (debugMode) {
+                console.log("Đã điều chỉnh vòng quay đến vị trí chính xác");
+            }
+
+            // Xóa class điều chỉnh
+            wheel.classList.remove('wheel-adjusting');
+
+            // Kiểm tra lại vị trí sau khi điều chỉnh
+            const newPosition = checkPointerPosition();
+            if (newPosition && newPosition.prize) {
+                if (parseInt(newPosition.prize.id) === parseInt(expectedPrize.id)) {
+                    if (debugMode) {
+                        console.log("Vị trí sau điều chỉnh chính xác");
+                    }
+                } else {
+                    console.error("Vị trí sau điều chỉnh vẫn không chính xác:", newPosition.prize);
+                }
+            }
+
+            // Gọi callback sau khi điều chỉnh xong
+            if (typeof callback === 'function') callback();
+        });
+    }
 });
+
 

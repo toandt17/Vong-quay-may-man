@@ -9,9 +9,6 @@
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Lịch sử trúng thưởng</h5>
-            <a href="{{ route('admin.award-histories.export') }}" class="btn btn-success">
-                <i class="fas fa-file-excel"></i> Xuất Excel
-            </a>
         </div>
     </div>
     <div class="card-body">
@@ -42,8 +39,11 @@
                         <button type="submit" class="btn btn-primary me-2">
                             <i class="fas fa-filter"></i> Lọc
                         </button>
-                        <a href="{{ route('admin.award-histories.index') }}" class="btn btn-secondary">
+                        <a href="{{ route('admin.award-histories.index') }}" class="btn btn-secondary me-2">
                             <i class="fas fa-sync"></i> Đặt lại
+                        </a>
+                        <a href="{{ route('admin.award-histories.export', request()->query()) }}" class="btn btn-success">
+                            <i class="fas fa-file-excel"></i> Xuất Excel
                         </a>
                     </div>
                 </form>
@@ -54,7 +54,7 @@
             <table class="table table-striped table-hover">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>STT</th>
                         <th>Người tham gia</th>
                         <th>Số điện thoại</th>
                         <th>Vòng quay</th>
@@ -65,9 +65,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($awardHistories as $history)
+                    @forelse($awardHistories as $index => $history)
                     <tr>
-                        <td>{{ $history->id }}</td>
+                        <td>{{ $awardHistories->firstItem() + $index }}</td>
                         <td>{{ $history->participant->name }}</td>
                         <td>{{ $history->participant->phone }}</td>
                         <td>{{ $history->luckyWheel->name }}</td>

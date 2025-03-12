@@ -19,133 +19,116 @@ class PrizeSeeder extends Seeder
         if (!$luckyWheel) {
             // Tạo vòng quay mặc định nếu chưa có
             $luckyWheel = LuckyWheel::create([
-                'name' => 'Vòng Quay May Mắn',
-                'description' => 'Quay để nhận những phần quà hấp dẫn',
+                'name' => 'Vòng Quay May Mắn AgriJapan',
+                'description' => 'Quay để nhận những phần quà hấp dẫn từ AgriJapan',
                 'is_active' => true,
             ]);
         }
 
-        // Danh sách giải thưởng
+        // Xóa các giải thưởng cũ của vòng quay này nếu có
+        Prize::where('lucky_wheel_id', $luckyWheel->id)->delete();
+
+        // Danh sách giải thưởng mới
         $prizes = [
             [
-                'name' => 'Tiền mặt 500.000đ',
-                'image' => null, // Sẽ sử dụng icon thay thế
-                'background_color' => '#e74c3c',
-                'icon' => 'fa-money-bill',
+                'name' => 'Thẻ điện thoại 100k',
+                'image' => null,
+                'background_color' => '#e74c3c', // Đỏ
+                'icon' => 'fa-mobile-alt',
                 'win_rate' => 5.00,
                 'quantity' => 10,
                 'remaining' => 10,
-                'description' => 'Giải thưởng tiền mặt trị giá 500.000đ',
+                'description' => 'Thẻ nạp điện thoại trị giá 100.000đ',
             ],
             [
-                'name' => 'Voucher 200.000đ',
+                'name' => 'Thẻ điện thoại 50k',
                 'image' => null,
-                'background_color' => '#f39c12',
-                'icon' => 'fa-ticket-alt',
+                'background_color' => '#f39c12', // Cam
+                'icon' => 'fa-phone',
                 'win_rate' => 10.00,
                 'quantity' => 20,
                 'remaining' => 20,
-                'description' => 'Voucher mua hàng trị giá 200.000đ',
+                'description' => 'Thẻ nạp điện thoại trị giá 50.000đ',
             ],
             [
-                'name' => 'Phân bón cao cấp',
+                'name' => 'Chúc bạn may mắn lần sau',
                 'image' => null,
-                'background_color' => '#2ecc71',
-                'icon' => 'fa-seedling',
-                'win_rate' => 15.00,
-                'quantity' => 30,
-                'remaining' => 30,
-                'description' => 'Gói phân bón cao cấp cho cây trồng',
-            ],
-            [
-                'name' => 'Thuốc bảo vệ thực vật',
-                'image' => null,
-                'background_color' => '#3498db',
-                'icon' => 'fa-spray-can',
-                'win_rate' => 15.00,
-                'quantity' => 30,
-                'remaining' => 30,
-                'description' => 'Thuốc bảo vệ thực vật an toàn và hiệu quả',
-            ],
-            [
-                'name' => 'Hạt giống cao cấp',
-                'image' => null,
-                'background_color' => '#9b59b6',
-                'icon' => 'fa-leaf',
-                'win_rate' => 20.00,
-                'quantity' => 50,
-                'remaining' => 50,
-                'description' => 'Gói hạt giống cao cấp cho năng suất cao',
-            ],
-            [
-                'name' => 'Dụng cụ làm vườn',
-                'image' => null,
-                'background_color' => '#1abc9c',
-                'icon' => 'fa-tools',
+                'background_color' => '#95a5a6', // Xám
+                'icon' => 'fa-heart',
                 'win_rate' => 10.00,
-                'quantity' => 20,
-                'remaining' => 20,
-                'description' => 'Bộ dụng cụ làm vườn chất lượng cao',
-            ],
-            [
-                'name' => 'Chúc may mắn lần sau',
-                'image' => null,
-                'background_color' => '#95a5a6',
-                'icon' => 'fa-frown',
-                'win_rate' => 0.00,
                 'quantity' => 0,
                 'remaining' => 0,
-                'description' => 'Chúc bạn may mắn lần sau',
+                'description' => 'Cảm ơn quý khách đã tin tưởng sử dụng sản phẩm của AgriJapan',
             ],
             [
-                'name' => 'Áo thun Agrijapan',
+                'name' => 'Phiếu mua hàng AgriJapan 200k',
                 'image' => null,
-                'background_color' => '#e67e22',
-                'icon' => 'fa-tshirt',
+                'background_color' => '#2ecc71', // Xanh lá
+                'icon' => 'fa-ticket-alt',
                 'win_rate' => 5.00,
                 'quantity' => 10,
                 'remaining' => 10,
-                'description' => 'Áo thun cao cấp với logo Agrijapan',
+                'description' => 'Phiếu mua hàng tại AgriJapan trị giá 200.000đ',
             ],
             [
-                'name' => 'Mũ nông dân',
+                'name' => 'GP Tạo Hạt Thần Tốc',
                 'image' => null,
-                'background_color' => '#f1c40f',
+                'background_color' => '#3498db', // Xanh dương
+                'icon' => 'fa-seedling',
+                'win_rate' => 10.00,
+                'quantity' => 20,
+                'remaining' => 20,
+                'description' => 'Sản phẩm GP Tạo Hạt Thần Tốc cho cây trồng',
+            ],
+            [
+                'name' => 'Nón AgriJapan',
+                'image' => null,
+                'background_color' => '#9b59b6', // Tím
                 'icon' => 'fa-hat-cowboy',
+                'win_rate' => 15.00,
+                'quantity' => 30,
+                'remaining' => 30,
+                'description' => 'Nón thời trang mang thương hiệu AgriJapan',
+            ],
+            [
+                'name' => 'Áo thun AgriJapan',
+                'image' => null,
+                'background_color' => '#1abc9c', // Ngọc lam
+                'icon' => 'fa-tshirt',
                 'win_rate' => 10.00,
                 'quantity' => 20,
                 'remaining' => 20,
-                'description' => 'Mũ nông dân chống nắng hiệu quả',
+                'description' => 'Áo thun cao cấp với logo AgriJapan',
             ],
             [
-                'name' => 'Găng tay làm vườn',
+                'name' => 'Áo thun AgriJapan',
                 'image' => null,
-                'background_color' => '#16a085',
-                'icon' => 'fa-mitten',
+                'background_color' => '#16a085', // Ngọc lam đậm (variant)
+                'icon' => 'fa-tshirt',
                 'win_rate' => 10.00,
                 'quantity' => 20,
                 'remaining' => 20,
-                'description' => 'Găng tay làm vườn chống trầy xước',
+                'description' => 'Áo thun cao cấp với logo AgriJapan',
             ],
             [
-                'name' => 'Thùng phân hữu cơ',
+                'name' => 'Chúc bạn may mắn lần sau',
                 'image' => null,
-                'background_color' => '#27ae60',
-                'icon' => 'fa-box',
-                'win_rate' => 5.00,
-                'quantity' => 10,
-                'remaining' => 10,
-                'description' => 'Thùng phân hữu cơ chất lượng cao',
+                'background_color' => '#7f8c8d', // Xám đậm (variant)
+                'icon' => 'fa-heart',
+                'win_rate' => 10.00,
+                'quantity' => 0,
+                'remaining' => 0,
+                'description' => 'Cảm ơn quý khách đã tin tưởng sử dụng sản phẩm của AgriJapan',
             ],
             [
-                'name' => 'Bình tưới cây',
+                'name' => 'Nón AgriJapan',
                 'image' => null,
-                'background_color' => '#2980b9',
-                'icon' => 'fa-fill-drip',
-                'win_rate' => 5.00,
-                'quantity' => 10,
-                'remaining' => 10,
-                'description' => 'Bình tưới cây tiện lợi',
+                'background_color' => '#8e44ad', // Tím đậm (variant)
+                'icon' => 'fa-hat-cowboy',
+                'win_rate' => 15.00,
+                'quantity' => 30,
+                'remaining' => 30,
+                'description' => 'Nón thời trang mang thương hiệu AgriJapan',
             ],
         ];
 

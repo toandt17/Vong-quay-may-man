@@ -31,10 +31,9 @@
         .wheel-pointer {
             position: absolute;
             top: -30px;
-            left: 46%;
+            left: 40%;
             transform: translateX(-50%);
-            width: 40px;
-            height: 40px;
+            height: 90px;
             filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
             z-index: 10;
         }
@@ -113,9 +112,13 @@
             transform: scale(1);
             opacity: 1;
         }
+        html, body {
+            overflow: auto !important;
+            position: static !important;
+        }
     </style>
 </head>
-<body>
+<body  style="background-image: url('{{ asset('images/background.jpg') }}'); background-size: cover; background-position: center;">
     <!-- Header -->
     <header class="header">
         <div class="container">
@@ -149,13 +152,13 @@
                                 <span>QUAY<br>NGAY!</span>
                             </div>
                         </div>
-                       <svg class="wheel-pointer position-absolute" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px">
+                       <svg class="wheel-pointer position-absolute" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FF0000" width="40px" height="40px">
                             <path d="M0 0h24v24H0z" fill="none"/>
                             <path d="M12 16.5l-6-6h12z"/>
                         </svg>
                     </div>
 
-                    <button class="spin-button" id="spin-button" disabled>
+                    <button class="spin-button mt-0" id="spin-button" style="background: linear-gradient(135deg, var(--festival-red), var(--lucky-gold));" disabled>
                         <i class="fas fa-sync-alt me-2"></i> QUAY NGAY!
                     </button>
 
@@ -202,11 +205,13 @@
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control" id="name" name="name" placeholder=" " required>
                             <label for="name">Họ và tên</label>
+                            <div class="invalid-feedback" id="name-error"></div>
                         </div>
 
                         <div class="form-floating mb-3">
                             <input type="tel" class="form-control" id="phone" name="phone" placeholder=" " required>
                             <label for="phone">Số điện thoại</label>
+                            <div class="invalid-feedback" id="phone-error"></div>
                         </div>
 
                         <div class="form-floating mb-3">
@@ -214,6 +219,7 @@
                                 <option value="">Chọn Tỉnh/Thành phố</option>
                             </select>
                             <label for="province">Tỉnh/Thành phố</label>
+                            <div class="invalid-feedback" id="province-error">Vui lòng chọn Tỉnh/Thành phố</div>
                         </div>
 
                         <div class="form-floating mb-3">
@@ -221,6 +227,7 @@
                                 <option value="">Chọn Quận/Huyện</option>
                             </select>
                             <label for="district">Quận/Huyện</label>
+                            <div class="invalid-feedback" id="district-error">Vui lòng chọn Quận/Huyện</div>
                         </div>
 
                         <div class="form-floating mb-3">
@@ -228,11 +235,13 @@
                                 <option value="">Chọn Phường/Xã</option>
                             </select>
                             <label for="ward">Phường/Xã</label>
+                            <div class="invalid-feedback" id="ward-error">Vui lòng chọn Phường/Xã</div>
                         </div>
 
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control" id="address" name="address" placeholder=" " required>
                             <label for="address">Địa chỉ cụ thể</label>
+                            <div class="invalid-feedback" id="address-error">Vui lòng nhập địa chỉ cụ thể</div>
                         </div>
 
                         <div class="form-check form-switch mb-3">
@@ -255,6 +264,7 @@
                                     <option value="ST25">ST25</option>
                                     <option value="Khác">Khác</option>
                                 </select>
+                                <div class="invalid-feedback" id="rice_variety-error">Vui lòng chọn giống lúa</div>
                             </div>
 
                             <div class="form-group mb-4">
@@ -269,18 +279,34 @@
                                     <option value="Trổ bông (55-85 ngày)">Trổ bông (55-85 ngày)</option>
                                     <option value="Chín (85-110 ngày)">Chín (85-110 ngày)</option>
                                 </select>
+                                <div class="invalid-feedback" id="rice_stage-error">Vui lòng chọn giai đoạn sinh trưởng</div>
                             </div>
 
                             <div class="form-group mb-4">
                                 <label class="form-label">Sản phẩm đã sử dụng của AgriJapan</label>
-                                <select class="form-select custom-select" id="used_products" name="used_products" multiple>
-                                    <option value="Chưa sử dụng" selected>Chưa sử dụng</option>
-                                    <option value="Phân bón lá">Phân bón lá</option>
-                                    <option value="Phân bón rễ">Phân bón rễ</option>
-                                    <option value="Thuốc bảo vệ thực vật">Thuốc bảo vệ thực vật</option>
-                                    <option value="Kích thích sinh trưởng">Kích thích sinh trưởng</option>
-                                </select>
-                                <small class="form-text text-muted">Có thể chọn nhiều sản phẩm (giữ phím Ctrl hoặc Cmd)</small>
+                                <div class="mobile-friendly-select" id="products-container">
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-none" name="used_products[]" value="Chưa sử dụng" checked>
+                                        <label for="product-none">Chưa sử dụng</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-leaf" name="used_products[]" value="Phân bón lá">
+                                        <label for="product-leaf">Phân bón lá</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-root" name="used_products[]" value="Phân bón rễ">
+                                        <label for="product-root">Phân bón rễ</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-protection" name="used_products[]" value="Thuốc bảo vệ thực vật">
+                                        <label for="product-protection">Thuốc bảo vệ thực vật</label>
+                                    </div>
+                                    <div class="product-option">
+                                        <input type="checkbox" id="product-growth" name="used_products[]" value="Kích thích sinh trưởng">
+                                        <label for="product-growth">Kích thích sinh trưởng</label>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">Có thể chọn nhiều sản phẩm</small>
                             </div>
                         </div>
                     </form>
@@ -297,12 +323,42 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
+    <!-- Modal Hiển Thị Kết Quả -->
+    <div class="modal fade" id="resultModal" tabindex="-1" aria-labelledby="resultModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="result-modal-header">
+                    <h5 class="modal-title" id="resultModalLabel">Kết quả quay thưởng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <h3 id="modal-result-title" class="mb-4"></h3>
+                    <p id="modal-result-message"></p>
+                    <div class="prize-card" id="modal-prize-details" style="display: none;">
+                        <img src="" alt="" class="prize-image mx-auto d-block" id="modal-prize-image">
+                        <div class="prize-info text-center mt-4">
+                            <h4 id="modal-prize-name" class="mb-3"></h4>
+                            <p id="modal-prize-description" class="text-muted"></p>
+                            <div class="prize-stats mt-3">
+                                <span id="modal-prize-quantity" class="badge bg-success"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap & jQuery JS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Confetti JS (hiệu ứng pháo hoa) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <!-- Biến JS để truyền dữ liệu cho script -->
     <script>
@@ -322,7 +378,7 @@
 
         // Cấu hình vòng quay
         const wheelConfig = {
-            // Tắt debug khi đã cài đặt xong
+            // Bật debug khi cần kiểm tra
             debug: false,
             // Cấu hình hiệu ứng quay
             spinEffect: {
@@ -331,9 +387,12 @@
                 // Thời gian quay (milliseconds)
                 duration: 5000
             },
-            // Điều chỉnh góc offset (bằng độ) để mũi tên trỏ đúng phân đoạn
-            // Giá trị -1 nghĩa là dịch chuyển ngược lại 1 phân đoạn (nếu lấy giải bên phải)
-            angleOffset: -1
+            // Điều chỉnh góc offset (bằng số phân đoạn) để mũi tên trỏ đúng phân đoạn
+            // Giá trị 0 nghĩa là không dịch chuyển phân đoạn
+            // Giá trị 0.5 nghĩa là dịch chuyển nửa phân đoạn
+            angleOffset: 0,
+            // Đảm bảo mũi tên trỏ chính xác vào giải thưởng
+            ensureExactPointer: true
         };
     </script>
 
@@ -561,13 +620,13 @@
                         throw new Error(data.message || 'Có lỗi xảy ra khi đăng ký');
                     }
                 } catch (error) {
-                    console.error('Registration Error:', error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Đăng ký thất bại!',
-                        text: error.message,
-                        confirmButtonColor: '#dc3545'
-                    });
+                    // console.error('Registration Error:', error);
+                    // Swal.fire({
+                    //     icon: 'error',
+                    //     title: 'Đăng ký thất bại!',
+                    //     text: error.message,
+                    //     confirmButtonColor: '#dc3545'
+                    // });
                 } finally {
                     // Reset nút submit
                     submitBtn.disabled = false;

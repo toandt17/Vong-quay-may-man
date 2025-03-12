@@ -58,7 +58,7 @@ class LuckyWheelController extends Controller
             'is_farmer' => 'boolean',
             'rice_variety' => 'nullable|string|max:255',
             'rice_stage' => 'nullable|string|max:255',
-            'used_products' => 'nullable|string|max:255',
+            'used_products' => 'nullable',
         ]);
 
         // Kiểm tra xem số điện thoại đã tồn tại chưa
@@ -77,11 +77,118 @@ class LuckyWheelController extends Controller
             $participant = Participant::create($validated);
         }
 
-        return response()->json([
-            'success' => true,
-            'participant_id' => $participant->id,
-            'message' => 'Đăng ký thành công! Bạn có thể quay vòng quay may mắn ngay bây giờ.',
-        ]);
+        // Lấy vòng quay hiện tại
+        $luckyWheel = LuckyWheel::where('is_active', true)->first();
+
+        if (!$luckyWheel) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy vòng quay may mắn.',
+            ]);
+        }
+
+        // Lấy danh sách giải thưởng có số lượng còn lại > 0
+        $availablePrizes = $luckyWheel->prizes()->where('remaining', '>', 0)->get();
+
+        // Bắt đầu quay ngầm và lưu kết quả
+        DB::beginTransaction();
+        try {
+            // Nếu không còn giải thưởng nào
+            if ($availablePrizes->isEmpty()) {
+                // Tạo lịch sử không trúng thưởng
+                $awardHistory = AwardHistory::create([
+                    'participant_id' => $participant->id,
+                    'lucky_wheel_id' => $luckyWheel->id,
+                    'prize_id' => null,
+                    'spin_time' => Carbon::now(),
+                    'is_win' => false,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'participant_id' => $participant->id,
+                    'lucky_wheel_id' => $luckyWheel->id,
+                    'pre_determined_result' => [
+                        'is_win' => false,
+                        'message' => 'Rất tiếc, bạn không trúng thưởng.',
+                    ],
+                    'message' => 'Đăng ký thành công! Bạn có thể quay vòng quay may mắn ngay bây giờ.',
+                ]);
+            }
+
+            // Tính toán giải thưởng dựa trên tỷ lệ
+            $prize = $this->calculatePrize($availablePrizes);
+
+            // Nếu trúng thưởng
+            if ($prize) {
+                // Giảm số lượng giải thưởng còn lại
+                $prize->decrement('remaining');
+
+                // Tạo lịch sử trúng thưởng
+                $awardHistory = AwardHistory::create([
+                    'participant_id' => $participant->id,
+                    'lucky_wheel_id' => $luckyWheel->id,
+                    'prize_id' => $prize->id,
+                    'spin_time' => Carbon::now(),
+                    'is_win' => true,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'participant_id' => $participant->id,
+                    'lucky_wheel_id' => $luckyWheel->id,
+                    'pre_determined_result' => [
+                        'is_win' => true,
+                        'prize' => [
+                            'id' => $prize->id,
+                            'name' => $prize->name,
+                            'image' => $prize->image ? asset('storage/' . $prize->image) : null,
+                            'description' => $prize->description,
+                            'background_color' => $prize->background_color,
+                            'icon' => $prize->icon,
+                            'win_rate' => $prize->win_rate,
+                            'quantity' => $prize->quantity,
+                            'remaining' => $prize->remaining,
+                        ],
+                        'message' => 'Chúc mừng! Bạn đã trúng ' . $prize->name,
+                    ],
+                    'message' => 'Đăng ký thành công! Bạn có thể quay vòng quay may mắn ngay bây giờ.',
+                ]);
+            } else {
+                // Tạo lịch sử không trúng thưởng
+                $awardHistory = AwardHistory::create([
+                    'participant_id' => $participant->id,
+                    'lucky_wheel_id' => $luckyWheel->id,
+                    'prize_id' => null,
+                    'spin_time' => Carbon::now(),
+                    'is_win' => false,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'participant_id' => $participant->id,
+                    'lucky_wheel_id' => $luckyWheel->id,
+                    'pre_determined_result' => [
+                        'is_win' => false,
+                        'message' => 'Rất tiếc, bạn không trúng thưởng.',
+                    ],
+                    'message' => 'Đăng ký thành công! Bạn có thể quay vòng quay may mắn ngay bây giờ.',
+                ]);
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Đã xảy ra lỗi khi xử lý thông tin. Vui lòng thử lại sau.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -97,99 +204,52 @@ class LuckyWheelController extends Controller
         $participant = Participant::findOrFail($request->participant_id);
         $luckyWheel = LuckyWheel::findOrFail($request->lucky_wheel_id);
 
-        // Kiểm tra xem người dùng đã quay chưa
-        if ($participant->hasSpun()) {
+        // Lấy lịch sử quay của người dùng
+        $awardHistory = AwardHistory::where('participant_id', $participant->id)
+                                   ->where('lucky_wheel_id', $luckyWheel->id)
+                                   ->first();
+
+        // Nếu không tìm thấy lịch sử, nghĩa là người dùng chưa "quay ngầm" khi đăng ký
+        if (!$awardHistory) {
             return response()->json([
                 'success' => false,
-                'message' => 'Bạn đã sử dụng lượt quay của mình.',
+                'message' => 'Không tìm thấy thông tin quay thưởng. Vui lòng thử lại.',
             ]);
         }
 
-        // Lấy danh sách giải thưởng có số lượng còn lại > 0
-        $availablePrizes = $luckyWheel->prizes()->where('remaining', '>', 0)->get();
+        // Trả về kết quả đã được xác định trước
+        if ($awardHistory->is_win) {
+            $prize = $awardHistory->prize;
 
-        // Nếu không còn giải thưởng nào
-        if ($availablePrizes->isEmpty()) {
-            // Tạo lịch sử không trúng thưởng
-            AwardHistory::create([
-                'participant_id' => $participant->id,
-                'lucky_wheel_id' => $luckyWheel->id,
-                'prize_id' => null,
-                'spin_time' => Carbon::now(),
-                'is_win' => false,
+            if (!$prize) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy thông tin giải thưởng. Vui lòng thử lại.',
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'is_win' => true,
+                'prize' => [
+                    'id' => $prize->id,
+                    'name' => $prize->name,
+                    'image' => $prize->image ? asset('storage/' . $prize->image) : null,
+                    'description' => $prize->description,
+                    'background_color' => $prize->background_color,
+                    'icon' => $prize->icon,
+                    'win_rate' => $prize->win_rate,
+                    'quantity' => $prize->quantity,
+                    'remaining' => $prize->remaining,
+                ],
+                'message' => 'Chúc mừng! Bạn đã trúng ' . $prize->name,
             ]);
-
+        } else {
             return response()->json([
                 'success' => true,
                 'is_win' => false,
                 'message' => 'Rất tiếc, bạn không trúng thưởng.',
             ]);
-        }
-
-        // Tính toán giải thưởng dựa trên tỷ lệ
-        $prize = $this->calculatePrize($availablePrizes);
-
-        // Bắt đầu transaction để đảm bảo tính nhất quán dữ liệu
-        DB::beginTransaction();
-
-        try {
-            // Nếu trúng thưởng
-            if ($prize) {
-                // Giảm số lượng giải thưởng còn lại
-                $prize->decrement('remaining');
-
-                // Tạo lịch sử trúng thưởng
-                AwardHistory::create([
-                    'participant_id' => $participant->id,
-                    'lucky_wheel_id' => $luckyWheel->id,
-                    'prize_id' => $prize->id,
-                    'spin_time' => Carbon::now(),
-                    'is_win' => true,
-                ]);
-
-                DB::commit();
-
-                return response()->json([
-                    'success' => true,
-                    'is_win' => true,
-                    'prize' => [
-                        'id' => $prize->id,
-                        'name' => $prize->name,
-                        'image' => $prize->image ? asset('storage/' . $prize->image) : null,
-                        'description' => $prize->description,
-                        'background_color' => $prize->background_color,
-                        'icon' => $prize->icon,
-                        'win_rate' => $prize->win_rate,
-                        'quantity' => $prize->quantity,
-                        'remaining' => $prize->remaining - 1, // Đã giảm 1 ở trên
-                    ],
-                    'message' => 'Chúc mừng! Bạn đã trúng ' . $prize->name,
-                ]);
-            } else {
-                // Tạo lịch sử không trúng thưởng
-                AwardHistory::create([
-                    'participant_id' => $participant->id,
-                    'lucky_wheel_id' => $luckyWheel->id,
-                    'prize_id' => null,
-                    'spin_time' => Carbon::now(),
-                    'is_win' => false,
-                ]);
-
-                DB::commit();
-
-                return response()->json([
-                    'success' => true,
-                    'is_win' => false,
-                    'message' => 'Rất tiếc, bạn không trúng thưởng.',
-                ]);
-            }
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Đã xảy ra lỗi khi quay thưởng. Vui lòng thử lại sau.',
-            ], 500);
         }
     }
 
